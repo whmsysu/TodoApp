@@ -237,7 +237,7 @@ gcloud firebase test android run \
 ## 👨‍💻 作者
 
 - **开发者**：Haomin Wu
-- **邮箱**：whmsysu@example.com
+- **邮箱**：wuhaominsysu@gmail.com
 - **GitHub**：[@whmsysu](https://github.com/whmsysu)
 
 ## 🙏 致谢
