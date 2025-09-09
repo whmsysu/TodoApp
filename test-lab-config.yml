@@ -1,0 +1,31 @@
+# Firebase Test Lab configuration for TodoApp
+# This file defines the test configuration for running tests on Firebase Test Lab
+
+# Test configuration
+testSpecs:
+  - type: instrumentation
+    app: app/build/outputs/apk/debug/app-debug.apk
+    test: app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+
+# Device configurations to test on
+devices:
+  - model: pixel4
+    version: 30
+    locale: en_US
+    orientation: portrait
+  - model: pixel5
+    version: 31
+    locale: en_US
+    orientation: portrait
+  - model: pixel6
+    version: 32
+    locale: en_US
+    orientation: portrait
+
+# Test timeout (in seconds)
+timeout: 1800
+
+# Test results
+results:
+  bucket: gs://test-lab-results-bucket
+  prefix: todoapp-test-results
