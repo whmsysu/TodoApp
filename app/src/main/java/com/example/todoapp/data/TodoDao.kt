@@ -25,13 +25,6 @@ interface TodoDao {
             "CASE priority WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 END DESC")
     fun getAllTodosSortedByDueDate(): LiveData<List<Todo>>
 
-    @Query("SELECT * FROM todos WHERE isCompleted = 0 ORDER BY " +
-            "CASE WHEN dueDate IS NULL THEN 1 ELSE 0 END, " +
-            "dueDate ASC, " +
-            "CASE WHEN dueTime IS NULL OR dueTime = '' THEN '24:00' ELSE dueTime END ASC, " +
-            "CASE priority WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 END DESC")
-    fun getPendingTodosSortedByDueDate(): LiveData<List<Todo>>
-
     @Query("SELECT * FROM todos WHERE id = :id")
     suspend fun getTodoById(id: Int): Todo?
 
@@ -44,12 +37,9 @@ interface TodoDao {
     @Delete
     suspend fun deleteTodo(todo: Todo)
 
-    @Update
-    suspend fun updateTodoStatus(todo: Todo)
-
-    @Query("SELECT * FROM todos WHERE isDaily = 1 ORDER BY dailyTime ASC")
-    fun getDailyTodos(): LiveData<List<Todo>>
-
     @Query("UPDATE todos SET lastCompletedDate = :date WHERE id = :id")
     suspend fun updateLastCompletedDate(id: Int, date: Date)
+    
+    @Update
+    suspend fun updateTodoStatus(todo: Todo)
 }

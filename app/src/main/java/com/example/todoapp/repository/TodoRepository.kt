@@ -8,17 +8,7 @@ import kotlinx.coroutines.withContext
 
 class TodoRepository(private val todoDao: TodoDao) {
 
-    fun getAllTodos(): LiveData<List<Todo>> = todoDao.getAllTodos()
-
-    fun getPendingTodos(): LiveData<List<Todo>> = todoDao.getPendingTodos()
-
-    fun getCompletedTodos(): LiveData<List<Todo>> = todoDao.getCompletedTodos()
-
-    fun getDailyTodos(): LiveData<List<Todo>> = todoDao.getDailyTodos()
-
     fun getAllTodosSortedByDueDate(): LiveData<List<Todo>> = todoDao.getAllTodosSortedByDueDate()
-
-    fun getPendingTodosSortedByDueDate(): LiveData<List<Todo>> = todoDao.getPendingTodosSortedByDueDate()
 
     suspend fun getTodoById(id: Int): Todo? = withContext(Dispatchers.IO) {
         todoDao.getTodoById(id)
@@ -35,8 +25,9 @@ class TodoRepository(private val todoDao: TodoDao) {
     suspend fun deleteTodo(todo: Todo) = withContext(Dispatchers.IO) {
         todoDao.deleteTodo(todo)
     }
-
+    
     suspend fun updateTodoStatus(todo: Todo) = withContext(Dispatchers.IO) {
         todoDao.updateTodoStatus(todo)
     }
+
 }

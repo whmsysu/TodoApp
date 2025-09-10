@@ -43,8 +43,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         todoAdapter = TodoAdapter(
             onTodoClick = { todo -> openEditTodo(todo) },
-            onTodoCheck = { todo, isChecked -> viewModel.updateTodoStatus(todo.id, isChecked) },
-            onTodoDelete = { todo -> viewModel.deleteTodo(todo) }
+            onTodoCheck = { todo, isChecked -> viewModel.updateTodoStatus(todo.id, isChecked) }
         )
         binding.recyclerView.apply {
             adapter = todoAdapter
@@ -71,7 +70,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
-        viewModel.getFilteredTodos().observe(this, Observer { todos ->
+        viewModel.filteredTodos.observe(this, Observer { todos ->
             todoAdapter.submitList(todos)
             binding.tvEmpty.visibility = if (todos.isEmpty()) View.VISIBLE else View.GONE
         })
@@ -95,7 +94,7 @@ class MainActivity : AppCompatActivity() {
         updateChipStyle(binding.chipDaily, filter == TodoFilter.DAILY)
     }
     
-    private fun updateChipStyle(chip: com.google.android.material.chip.Chip, isSelected: Boolean) {
+    private fun updateChipStyle(chip: Chip, isSelected: Boolean) {
         if (isSelected) {
             chip.setChipBackgroundColorResource(R.color.purple_500)
             chip.setChipStrokeColorResource(R.color.purple_700)

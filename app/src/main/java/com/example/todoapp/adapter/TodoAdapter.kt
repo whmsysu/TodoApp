@@ -17,8 +17,7 @@ import java.util.*
 
 class TodoAdapter(
     private val onTodoClick: (Todo) -> Unit,
-    private val onTodoCheck: (Todo, Boolean) -> Unit,
-    private val onTodoDelete: (Todo) -> Unit
+    private val onTodoCheck: (Todo, Boolean) -> Unit
 ) : ListAdapter<Todo, TodoAdapter.TodoViewHolder>(TodoDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TodoViewHolder {
@@ -69,8 +68,8 @@ class TodoAdapter(
             titleTextView.paint.isStrikeThruText = todo.isCompleted
 
             itemView.setOnClickListener { onTodoClick(todo) }
-            completedCheckBox.setOnCheckedChangeListener { _, isChecked ->
-                onTodoCheck(todo, isChecked)
+            completedCheckBox.setOnClickListener {
+                onTodoCheck(todo, completedCheckBox.isChecked)
             }
         }
 

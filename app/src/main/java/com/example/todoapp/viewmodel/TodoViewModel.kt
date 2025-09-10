@@ -16,33 +16,26 @@ import kotlinx.coroutines.launch
 class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: TodoRepository
     private val notificationManager: TodoNotificationManager
-    val allTodos: LiveData<List<Todo>>
-    val pendingTodos: LiveData<List<Todo>>
-    val completedTodos: LiveData<List<Todo>>
-    val dailyTodos: LiveData<List<Todo>>
     private val _currentFilter = MutableLiveData<TodoFilter>()
     val currentFilter: LiveData<TodoFilter> = _currentFilter
+    
+    // Single LiveData that combines database data with filter
+    private val _filteredTodos = MediatorLiveData<List<Todo>>()
+    val filteredTodos: LiveData<List<Todo>> = _filteredTodos
 
     init {
         val todoDao = TodoDatabase.getDatabase(application).todoDao()
         repository = TodoRepository(todoDao)
         notificationManager = TodoNotificationManager(application)
-        allTodos = repository.getAllTodosSortedByDueDate()
-        pendingTodos = repository.getPendingTodosSortedByDueDate()
-        completedTodos = repository.getCompletedTodos()
-        dailyTodos = repository.getDailyTodos()
         _currentFilter.value = TodoFilter.ALL
+        
+        // Set up filtered todos LiveData
+        setupFilteredTodos()
     }
 
     fun insertTodo(todo: Todo) {
         viewModelScope.launch {
             repository.insertTodo(todo)
-        }
-    }
-
-    fun updateTodo(todo: Todo) {
-        viewModelScope.launch {
-            repository.updateTodo(todo)
         }
     }
 
@@ -58,7 +51,7 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateTodoStatus(id: Int, isCompleted: Boolean) {
         viewModelScope.launch {
-            // First get the todo, then update it
+            // Get the todo first, then update it using @Update to ensure LiveData updates
             val todo = repository.getTodoById(id)
             todo?.let {
                 val updatedTodo = it.copy(isCompleted = isCompleted)
@@ -71,33 +64,32 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         _currentFilter.value = filter
     }
 
-    fun getFilteredTodos(): LiveData<List<Todo>> {
-        val filteredTodos = MediatorLiveData<List<Todo>>()
-        
+    private var currentTodos: List<Todo> = emptyList()
+
+    private fun setupFilteredTodos() {
+
         fun updateFilteredTodos() {
             val currentFilter = _currentFilter.value ?: TodoFilter.ALL
             
-            val source = when (currentFilter) {
-                TodoFilter.PENDING -> pendingTodos
-                TodoFilter.COMPLETED -> completedTodos
-                TodoFilter.DAILY -> dailyTodos
-                else -> allTodos
+            val filteredList = when (currentFilter) {
+                TodoFilter.PENDING -> currentTodos.filter { !it.isCompleted }
+                TodoFilter.COMPLETED -> currentTodos.filter { it.isCompleted }
+                TodoFilter.DAILY -> currentTodos.filter { it.isDaily }
+                else -> currentTodos
             }
-            filteredTodos.removeSource(source)
-            filteredTodos.addSource(source) { todos ->
-                filteredTodos.value = todos
-            }
+            _filteredTodos.value = filteredList
         }
         
-        // Initial setup
-        updateFilteredTodos()
-        
-        // Update when filter changes
-        filteredTodos.addSource(_currentFilter) { 
+        // Update when all todos change
+        _filteredTodos.addSource(repository.getAllTodosSortedByDueDate()) { todos ->
+            currentTodos = todos
             updateFilteredTodos()
         }
         
-        return filteredTodos
+        // Update when filter changes
+        _filteredTodos.addSource(_currentFilter) {
+            updateFilteredTodos()
+        }
     }
 }
 
