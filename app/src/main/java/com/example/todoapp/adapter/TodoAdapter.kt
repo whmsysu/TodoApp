@@ -33,7 +33,6 @@ class TodoAdapter(
 
     inner class TodoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val titleTextView: TextView = itemView.findViewById(R.id.tv_title)
-        private val descriptionTextView: TextView = itemView.findViewById(R.id.tv_description)
         private val priorityTextView: TextView = itemView.findViewById(R.id.tv_priority)
         private val dueDateTextView: TextView = itemView.findViewById(R.id.tv_due_date)
         private val dailyTimeTextView: TextView = itemView.findViewById(R.id.tv_daily_time)
@@ -41,7 +40,6 @@ class TodoAdapter(
 
         fun bind(todo: Todo) {
             titleTextView.text = todo.title
-            descriptionTextView.text = todo.description
             priorityTextView.text = getPriorityText(todo.priority)
             priorityTextView.setBackgroundColor(getPriorityColor(itemView.context, todo.priority))
             
@@ -54,8 +52,13 @@ class TodoAdapter(
             }
 
             // Handle daily todo display
-            if (todo.isDaily && todo.dailyTime != null) {
-                dailyTimeTextView.text = "每日 ${todo.dailyTime}"
+            if (todo.isDaily) {
+                val timeText = todo.dailyTime?.let { " ${it}" } ?: ""
+                val endDateText = todo.dailyEndDate?.let { endDate ->
+                    val dateFormat = SimpleDateFormat("MM-dd", Locale.getDefault())
+                    " 至 ${dateFormat.format(endDate)}"
+                } ?: ""
+                dailyTimeTextView.text = "每日重复$timeText$endDateText"
                 dailyTimeTextView.visibility = View.VISIBLE
             } else {
                 dailyTimeTextView.visibility = View.GONE
@@ -63,7 +66,6 @@ class TodoAdapter(
 
             completedCheckBox.isChecked = todo.isCompleted
             titleTextView.paint.isStrikeThruText = todo.isCompleted
-            descriptionTextView.paint.isStrikeThruText = todo.isCompleted
 
             itemView.setOnClickListener { onTodoClick(todo) }
             completedCheckBox.setOnCheckedChangeListener { _, isChecked ->

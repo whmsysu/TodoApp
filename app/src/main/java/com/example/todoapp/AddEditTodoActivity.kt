@@ -22,6 +22,7 @@ class AddEditTodoActivity : AppCompatActivity() {
     private var selectedDueDate: Date? = null
     private var isDaily: Boolean = false
     private var selectedDailyTime: String? = null
+    private var selectedDailyEndDate: Date? = null
 
     companion object {
         const val EXTRA_TODO_ID = "com.example.todoapp.EXTRA_TODO_ID"
@@ -37,6 +38,7 @@ class AddEditTodoActivity : AppCompatActivity() {
         setupDueDateButton()
         setupDailySwitch()
         setupDailyTimeButton()
+        setupDailyEndDateButton()
         setupSaveButton()
         observeViewModel()
 
@@ -53,15 +55,24 @@ class AddEditTodoActivity : AppCompatActivity() {
     }
 
     private fun setupPriorityChips() {
-        binding.chipGroupPriority.setOnCheckedStateChangeListener { _, _ ->
-            when {
-                binding.chipHigh.isChecked -> selectedPriority = Priority.HIGH
-                binding.chipMedium.isChecked -> selectedPriority = Priority.MEDIUM
-                binding.chipLow.isChecked -> selectedPriority = Priority.LOW
+        binding.radioHigh.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                selectedPriority = Priority.HIGH
+            }
+        }
+        binding.radioMedium.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                selectedPriority = Priority.MEDIUM
+            }
+        }
+        binding.radioLow.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                selectedPriority = Priority.LOW
             }
         }
         // Set default selection
-        binding.chipMedium.isChecked = true
+        binding.radioMedium.isChecked = true
+        selectedPriority = Priority.MEDIUM
     }
 
     private fun setupDueDateButton() {
@@ -73,13 +84,19 @@ class AddEditTodoActivity : AppCompatActivity() {
     private fun setupDailySwitch() {
         binding.switchDaily.setOnCheckedChangeListener { _, isChecked ->
             isDaily = isChecked
-            binding.layoutDailyTime.visibility = if (isChecked) android.view.View.VISIBLE else android.view.View.GONE
+            binding.layoutDailyOptions.visibility = if (isChecked) android.view.View.VISIBLE else android.view.View.GONE
         }
     }
 
     private fun setupDailyTimeButton() {
         binding.btnDailyTime.setOnClickListener {
             showTimePicker()
+        }
+    }
+
+    private fun setupDailyEndDateButton() {
+        binding.btnDailyEndDate.setOnClickListener {
+            showDailyEndDatePicker()
         }
     }
 
@@ -103,13 +120,14 @@ class AddEditTodoActivity : AppCompatActivity() {
 
     private fun populateFields(todo: Todo) {
         binding.etTitle.setText(todo.title)
-        binding.etDescription.setText(todo.description)
         
+        // Set the correct priority selection
         when (todo.priority) {
-            Priority.HIGH -> binding.chipHigh.isChecked = true
-            Priority.MEDIUM -> binding.chipMedium.isChecked = true
-            Priority.LOW -> binding.chipLow.isChecked = true
+            Priority.HIGH -> binding.radioHigh.isChecked = true
+            Priority.MEDIUM -> binding.radioMedium.isChecked = true
+            Priority.LOW -> binding.radioLow.isChecked = true
         }
+        selectedPriority = todo.priority
         
         todo.dueDate?.let {
             selectedDueDate = it
@@ -120,11 +138,17 @@ class AddEditTodoActivity : AppCompatActivity() {
         // Handle daily todo fields
         isDaily = todo.isDaily
         binding.switchDaily.isChecked = isDaily
-        binding.layoutDailyTime.visibility = if (isDaily) android.view.View.VISIBLE else android.view.View.GONE
+        binding.layoutDailyOptions.visibility = if (isDaily) android.view.View.VISIBLE else android.view.View.GONE
         
         todo.dailyTime?.let { time ->
             selectedDailyTime = time
             binding.btnDailyTime.text = time
+        }
+
+        todo.dailyEndDate?.let { endDate ->
+            selectedDailyEndDate = endDate
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            binding.btnDailyEndDate.text = dateFormat.format(endDate)
         }
     }
 
@@ -174,21 +198,37 @@ class AddEditTodoActivity : AppCompatActivity() {
         timePickerDialog.show()
     }
 
+    private fun showDailyEndDatePicker() {
+        val calendar = Calendar.getInstance()
+        selectedDailyEndDate?.let { calendar.time = it }
+        
+        val datePickerDialog = DatePickerDialog(
+            this,
+            { _, year, month, dayOfMonth ->
+                val selectedCalendar = Calendar.getInstance()
+                selectedCalendar.set(year, month, dayOfMonth)
+                selectedDailyEndDate = selectedCalendar.time
+                
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                binding.btnDailyEndDate.text = dateFormat.format(selectedCalendar.time)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+        datePickerDialog.show()
+    }
+
     private fun saveTodo() {
         val title = binding.etTitle.text.toString().trim()
-        val description = binding.etDescription.text.toString().trim()
 
         if (title.isEmpty()) {
             Toast.makeText(this, "请输入标题", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (isDaily && selectedDailyTime == null) {
-            Toast.makeText(this, "请选择每日提醒时间", Toast.LENGTH_SHORT).show()
-            return
-        }
 
-        viewModel.saveTodo(title, description, selectedPriority, selectedDueDate, isDaily, selectedDailyTime)
+        viewModel.saveTodo(title, "", selectedPriority, selectedDueDate, isDaily, selectedDailyTime, selectedDailyEndDate)
         finish()
     }
 

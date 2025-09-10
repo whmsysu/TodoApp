@@ -16,6 +16,7 @@ data class Todo(
     val dueDate: Date? = null,
     val isDaily: Boolean = false,
     val dailyTime: String? = null, // Format: "HH:mm"
+    val dailyEndDate: Date? = null, // End date for daily repetition
     val lastCompletedDate: Date? = null
 )
 
