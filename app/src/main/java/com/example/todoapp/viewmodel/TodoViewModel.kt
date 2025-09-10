@@ -3,6 +3,7 @@ package com.example.todoapp.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.todoapp.data.Todo
@@ -18,7 +19,6 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     val pendingTodos: LiveData<List<Todo>>
     val completedTodos: LiveData<List<Todo>>
     val dailyTodos: LiveData<List<Todo>>
-
     private val _currentFilter = MutableLiveData<TodoFilter>()
     val currentFilter: LiveData<TodoFilter> = _currentFilter
 
@@ -26,8 +26,8 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         val todoDao = TodoDatabase.getDatabase(application).todoDao()
         repository = TodoRepository(todoDao)
         notificationManager = TodoNotificationManager(application)
-        allTodos = repository.getAllTodos()
-        pendingTodos = repository.getPendingTodos()
+        allTodos = repository.getAllTodosSortedByDueDate()
+        pendingTodos = repository.getPendingTodosSortedByDueDate()
         completedTodos = repository.getCompletedTodos()
         dailyTodos = repository.getDailyTodos()
         _currentFilter.value = TodoFilter.ALL
@@ -66,12 +66,32 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getFilteredTodos(): LiveData<List<Todo>> {
-        return when (_currentFilter.value) {
-            TodoFilter.PENDING -> pendingTodos
-            TodoFilter.COMPLETED -> completedTodos
-            TodoFilter.DAILY -> dailyTodos
-            else -> allTodos
+        val filteredTodos = MediatorLiveData<List<Todo>>()
+        
+        fun updateFilteredTodos() {
+            val currentFilter = _currentFilter.value ?: TodoFilter.ALL
+            
+            val source = when (currentFilter) {
+                TodoFilter.PENDING -> pendingTodos
+                TodoFilter.COMPLETED -> completedTodos
+                TodoFilter.DAILY -> dailyTodos
+                else -> allTodos
+            }
+            filteredTodos.removeSource(source)
+            filteredTodos.addSource(source) { todos ->
+                filteredTodos.value = todos
+            }
         }
+        
+        // Initial setup
+        updateFilteredTodos()
+        
+        // Update when filter changes
+        filteredTodos.addSource(_currentFilter) { 
+            updateFilteredTodos()
+        }
+        
+        return filteredTodos
     }
 }
 

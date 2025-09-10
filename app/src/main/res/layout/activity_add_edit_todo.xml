@@ -126,9 +126,18 @@
                 android:id="@+id/btn_due_date"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="8dp"
                 android:text="选择日期"
                 app:icon="@drawable/ic_calendar" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_due_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="选择时间（可选）"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                app:icon="@drawable/ic_time" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"

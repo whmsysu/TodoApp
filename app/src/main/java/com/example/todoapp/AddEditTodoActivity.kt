@@ -20,6 +20,7 @@ class AddEditTodoActivity : AppCompatActivity() {
     private val viewModel: AddEditTodoViewModel by viewModels()
     private var selectedPriority: Priority = Priority.MEDIUM
     private var selectedDueDate: Date? = null
+    private var selectedDueTime: String? = null
     private var isDaily: Boolean = false
     private var selectedDailyTime: String? = null
     private var selectedDailyEndDate: Date? = null
@@ -36,6 +37,7 @@ class AddEditTodoActivity : AppCompatActivity() {
         setupToolbar()
         setupPriorityChips()
         setupDueDateButton()
+        setupDueTimeButton()
         setupDailySwitch()
         setupDailyTimeButton()
         setupDailyEndDateButton()
@@ -78,6 +80,12 @@ class AddEditTodoActivity : AppCompatActivity() {
     private fun setupDueDateButton() {
         binding.btnDueDate.setOnClickListener {
             showDatePicker()
+        }
+    }
+
+    private fun setupDueTimeButton() {
+        binding.btnDueTime.setOnClickListener {
+            showDueTimePicker()
         }
     }
 
@@ -135,6 +143,11 @@ class AddEditTodoActivity : AppCompatActivity() {
             binding.btnDueDate.text = dateFormat.format(it)
         }
 
+        todo.dueTime?.let { time ->
+            selectedDueTime = time
+            binding.btnDueTime.text = time
+        }
+
         // Handle daily todo fields
         isDaily = todo.isDaily
         binding.switchDaily.isChecked = isDaily
@@ -171,6 +184,31 @@ class AddEditTodoActivity : AppCompatActivity() {
             calendar.get(Calendar.DAY_OF_MONTH)
         )
         datePickerDialog.show()
+    }
+
+    private fun showDueTimePicker() {
+        val calendar = Calendar.getInstance()
+        selectedDueTime?.let { timeString ->
+            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+            try {
+                val time = timeFormat.parse(timeString)
+                time?.let { calendar.time = it }
+            } catch (e: Exception) {
+                // Ignore parsing errors
+            }
+        }
+
+        val timePickerDialog = TimePickerDialog(
+            this,
+            { _, hourOfDay, minute ->
+                selectedDueTime = String.format("%02d:%02d", hourOfDay, minute)
+                binding.btnDueTime.text = selectedDueTime
+            },
+            calendar.get(Calendar.HOUR_OF_DAY),
+            calendar.get(Calendar.MINUTE),
+            true
+        )
+        timePickerDialog.show()
     }
 
     private fun showTimePicker() {
@@ -228,7 +266,7 @@ class AddEditTodoActivity : AppCompatActivity() {
         }
 
 
-        viewModel.saveTodo(title, "", selectedPriority, selectedDueDate, isDaily, selectedDailyTime, selectedDailyEndDate)
+        viewModel.saveTodo(title, "", selectedPriority, selectedDueDate, selectedDueTime, isDaily, selectedDailyTime, selectedDailyEndDate)
         finish()
     }
 

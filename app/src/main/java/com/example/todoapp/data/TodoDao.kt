@@ -15,6 +15,23 @@ interface TodoDao {
     @Query("SELECT * FROM todos WHERE isCompleted = 1 ORDER BY createdAt DESC")
     fun getCompletedTodos(): LiveData<List<Todo>>
 
+    // Sorted by due date/time and priority
+    @Query("SELECT * FROM todos ORDER BY " +
+            "CASE WHEN dueDate IS NULL THEN 1 ELSE 0 END, " +
+            "dueDate ASC, " +
+            "CASE WHEN dueTime IS NULL THEN 1 ELSE 0 END, " +
+            "dueTime ASC, " +
+            "CASE priority WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 END DESC")
+    fun getAllTodosSortedByDueDate(): LiveData<List<Todo>>
+
+    @Query("SELECT * FROM todos WHERE isCompleted = 0 ORDER BY " +
+            "CASE WHEN dueDate IS NULL THEN 1 ELSE 0 END, " +
+            "dueDate ASC, " +
+            "CASE WHEN dueTime IS NULL THEN 1 ELSE 0 END, " +
+            "dueTime ASC, " +
+            "CASE priority WHEN 'HIGH' THEN 3 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 1 END DESC")
+    fun getPendingTodosSortedByDueDate(): LiveData<List<Todo>>
+
     @Query("SELECT * FROM todos WHERE id = :id")
     suspend fun getTodoById(id: Int): Todo?
 

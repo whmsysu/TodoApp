@@ -45,7 +45,8 @@ class TodoAdapter(
             
             todo.dueDate?.let {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                dueDateTextView.text = dateFormat.format(it)
+                val timeText = todo.dueTime?.let { time -> " $time" } ?: ""
+                dueDateTextView.text = "${dateFormat.format(it)}$timeText"
                 dueDateTextView.visibility = View.VISIBLE
             } ?: run {
                 dueDateTextView.visibility = View.GONE
