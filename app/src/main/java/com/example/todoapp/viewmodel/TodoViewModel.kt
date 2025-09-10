@@ -77,7 +77,29 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
                 TodoFilter.DAILY -> currentTodos.filter { it.isDaily }
                 else -> currentTodos
             }
-            _filteredTodos.value = filteredList
+            _filteredTodos.value = filteredList.sortedWith(compareBy<Todo> { todo ->
+                // 1. 首先按日期排序 (null日期排在最后)
+                val dateTime = todo.dueDate?.time ?: Long.MAX_VALUE
+                android.util.Log.d("SortDebug", "Todo: ${todo.title}, Date: ${todo.dueDate}, Time: ${dateTime}")
+                dateTime
+            }.thenBy { todo ->
+                // 2. 相同日期内，按时间排序 (没有时间的排在最后)
+                val time = when {
+                    todo.dueTime.isNullOrBlank() -> "24:00" // 没有时间的排在最后
+                    else -> todo.dueTime
+                }
+                android.util.Log.d("SortDebug", "Todo: ${todo.title}, Time: ${time}")
+                time
+            }.thenByDescending { todo ->
+                // 3. 最后按优先级排序 (高优先级在前)
+                val priority = when (todo.priority) {
+                    com.example.todoapp.data.Priority.HIGH -> 3
+                    com.example.todoapp.data.Priority.MEDIUM -> 2
+                    com.example.todoapp.data.Priority.LOW -> 1
+                }
+                android.util.Log.d("SortDebug", "Todo: ${todo.title}, Priority: ${priority}")
+                priority
+            })
         }
         
         // Update when all todos change

@@ -1,5 +1,6 @@
 package com.example.todoapp.adapter
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,8 +38,17 @@ class TodoAdapter(
         private val dailyTimeTextView: TextView = itemView.findViewById(R.id.tv_daily_time)
         private val completedCheckBox: CheckBox = itemView.findViewById(R.id.cb_completed)
 
+        @SuppressLint("SetTextI18n")
         fun bind(todo: Todo) {
-            titleTextView.text = todo.title
+            // Debug: Check if todo has empty title
+            if (todo.title.isBlank()) {
+                titleTextView.text = "[空标题]"
+                titleTextView.setTextColor(itemView.context.getColor(android.R.color.holo_red_dark))
+            } else {
+                titleTextView.text = todo.title
+                titleTextView.setTextColor(itemView.context.getColor(android.R.color.black))
+            }
+            
             priorityTextView.text = getPriorityText(todo.priority)
             priorityTextView.setBackgroundColor(getPriorityColor(itemView.context, todo.priority))
             

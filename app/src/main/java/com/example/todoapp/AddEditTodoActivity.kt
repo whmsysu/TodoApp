@@ -196,10 +196,11 @@ class AddEditTodoActivity : AppCompatActivity() {
             this,
             { _, year, month, dayOfMonth ->
                 val selectedCalendar = Calendar.getInstance()
-                selectedCalendar.set(year, month, dayOfMonth)
+                selectedCalendar.set(year, month, dayOfMonth, 0, 0, 0)
+                selectedCalendar.set(Calendar.MILLISECOND, 0)
                 selectedDueDate = selectedCalendar.time
                 
-                val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 binding.btnDueDate.text = dateFormat.format(selectedCalendar.time)
                 
                 // Update time button state when date is selected
@@ -300,8 +301,6 @@ class AddEditTodoActivity : AppCompatActivity() {
             Toast.makeText(this, "请输入标题", Toast.LENGTH_SHORT).show()
             return
         }
-
-
         viewModel.saveTodo(title, "", selectedPriority, selectedDueDate, selectedDueTime, isDaily, selectedDailyTime, selectedDailyEndDate)
         finish()
     }
