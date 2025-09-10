@@ -38,13 +38,12 @@ class AddEditTodoViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun saveTodo(title: String, description: String, priority: Priority, dueDate: Date?, dueTime: String?, isDaily: Boolean, dailyTime: String?, dailyEndDate: Date?) {
+    fun saveTodo(title: String, priority: Priority, dueDate: Date?, dueTime: String?, isDaily: Boolean, dailyTime: String?, dailyEndDate: Date?) {
         val currentTodo = _todo.value
         if (currentTodo != null) {
             // Edit existing todo
             val updatedTodo = currentTodo.copy(
                 title = title,
-                description = description,
                 priority = priority,
                 dueDate = dueDate,
                 dueTime = dueTime,
@@ -57,7 +56,6 @@ class AddEditTodoViewModel(application: Application) : AndroidViewModel(applicat
             // Create new todo
             val newTodo = Todo(
                 title = title,
-                description = description,
                 priority = priority,
                 dueDate = dueDate,
                 dueTime = dueTime,

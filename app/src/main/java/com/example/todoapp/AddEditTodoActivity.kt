@@ -59,6 +59,34 @@ class AddEditTodoActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowHomeEnabled(true)
     }
 
+    private fun disableAllFields() {
+        // 禁用标题输入
+        binding.etTitle.isEnabled = false
+        binding.etTitle.setTextColor(getColor(android.R.color.darker_gray))
+        
+        // 禁用优先级选择
+        binding.radioHigh.isEnabled = false
+        binding.radioMedium.isEnabled = false
+        binding.radioLow.isEnabled = false
+        
+        // 禁用截止日期和时间按钮
+        binding.btnDueDate.isEnabled = false
+        binding.btnDueTime.isEnabled = false
+        
+        // 禁用每日任务开关
+        binding.switchDaily.isEnabled = false
+        
+        // 禁用每日任务相关按钮
+        binding.btnDailyTime.isEnabled = false
+        binding.btnDailyEndDate.isEnabled = false
+        
+        // 隐藏保存按钮
+        binding.btnSave.visibility = android.view.View.GONE
+        
+        // 显示提示信息
+        binding.etTitle.hint = "此任务已完成，无法编辑"
+    }
+
     private fun setupPriorityChips() {
         binding.radioHigh.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -113,6 +141,26 @@ class AddEditTodoActivity : AppCompatActivity() {
         binding.switchDaily.setOnCheckedChangeListener { _, isChecked ->
             isDaily = isChecked
             binding.layoutDailyOptions.visibility = if (isChecked) android.view.View.VISIBLE else android.view.View.GONE
+            
+            // 当选择每日任务时，隐藏截止日期和时间
+            if (isChecked) {
+                binding.btnDueDate.visibility = android.view.View.GONE
+                binding.btnDueTime.visibility = android.view.View.GONE
+                // 清除已选择的日期和时间
+                selectedDueDate = null
+                selectedDueTime = null
+                binding.btnDueDate.text = "选择截止日期"
+                binding.btnDueTime.text = "选择时间（可选）"
+            } else {
+                binding.btnDueDate.visibility = android.view.View.VISIBLE
+                binding.btnDueTime.visibility = android.view.View.VISIBLE
+                updateTimeButtonState()
+                // 清空每日任务相关数据
+                selectedDailyTime = null
+                selectedDailyEndDate = null
+                binding.btnDailyTime.text = "选择提醒时间（可选）"
+                binding.btnDailyEndDate.text = "选择结束日期（可选）"
+            }
         }
     }
 
@@ -149,6 +197,12 @@ class AddEditTodoActivity : AppCompatActivity() {
     private fun populateFields(todo: Todo) {
         binding.etTitle.setText(todo.title)
         
+        // 如果TODO已完成，禁用所有编辑功能
+        if (todo.isCompleted) {
+            disableAllFields()
+            return
+        }
+        
         // Set the correct priority selection
         when (todo.priority) {
             Priority.HIGH -> binding.radioHigh.isChecked = true
@@ -172,6 +226,26 @@ class AddEditTodoActivity : AppCompatActivity() {
         isDaily = todo.isDaily
         binding.switchDaily.isChecked = isDaily
         binding.layoutDailyOptions.visibility = if (isDaily) android.view.View.VISIBLE else android.view.View.GONE
+        
+        // 如果是每日任务，隐藏截止日期和时间，并清空数据
+        if (isDaily) {
+            binding.btnDueDate.visibility = android.view.View.GONE
+            binding.btnDueTime.visibility = android.view.View.GONE
+            // 清空截止日期和时间数据
+            selectedDueDate = null
+            selectedDueTime = null
+            binding.btnDueDate.text = "选择截止日期"
+            binding.btnDueTime.text = "选择时间（可选）"
+        } else {
+            binding.btnDueDate.visibility = android.view.View.VISIBLE
+            binding.btnDueTime.visibility = android.view.View.VISIBLE
+            updateTimeButtonState()
+            // 清空每日任务相关数据
+            selectedDailyTime = null
+            selectedDailyEndDate = null
+            binding.btnDailyTime.text = "选择提醒时间（可选）"
+            binding.btnDailyEndDate.text = "选择结束日期（可选）"
+        }
         
         todo.dailyTime?.let { time ->
             selectedDailyTime = time
@@ -198,6 +272,19 @@ class AddEditTodoActivity : AppCompatActivity() {
                 val selectedCalendar = Calendar.getInstance()
                 selectedCalendar.set(year, month, dayOfMonth, 0, 0, 0)
                 selectedCalendar.set(Calendar.MILLISECOND, 0)
+                
+                // 检查选择的日期是否早于当前日期
+                val currentDate = Calendar.getInstance()
+                currentDate.set(Calendar.HOUR_OF_DAY, 0)
+                currentDate.set(Calendar.MINUTE, 0)
+                currentDate.set(Calendar.SECOND, 0)
+                currentDate.set(Calendar.MILLISECOND, 0)
+                
+                if (selectedCalendar.before(currentDate)) {
+                    Toast.makeText(this, "截止日期不能早于今天", Toast.LENGTH_SHORT).show()
+                    return@DatePickerDialog
+                }
+                
                 selectedDueDate = selectedCalendar.time
                 
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -210,6 +297,9 @@ class AddEditTodoActivity : AppCompatActivity() {
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
         )
+        
+        // 设置最小日期为今天
+        datePickerDialog.datePicker.minDate = System.currentTimeMillis()
         datePickerDialog.show()
     }
 
@@ -238,7 +328,31 @@ class AddEditTodoActivity : AppCompatActivity() {
         val timePickerDialog = TimePickerDialog(
             this,
             { _, hourOfDay, minute ->
-                selectedDueTime = String.format("%02d:%02d", hourOfDay, minute)
+                // 检查选择的时间是否早于当前时间（如果选择的是今天）
+                val selectedTime = String.format("%02d:%02d", hourOfDay, minute)
+                val currentTime = Calendar.getInstance()
+                val currentTimeString = String.format("%02d:%02d", 
+                    currentTime.get(Calendar.HOUR_OF_DAY), 
+                    currentTime.get(Calendar.MINUTE))
+                
+                // 如果选择的是今天，检查时间不能早于当前时间
+                if (selectedDueDate != null) {
+                    val selectedDate = Calendar.getInstance()
+                    selectedDate.time = selectedDueDate!!
+                    val today = Calendar.getInstance()
+                    
+                    // 如果选择的是今天
+                    if (selectedDate.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                        selectedDate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)) {
+                        
+                        if (selectedTime <= currentTimeString) {
+                            Toast.makeText(this, "截止时间不能早于当前时间", Toast.LENGTH_SHORT).show()
+                            return@TimePickerDialog
+                        }
+                    }
+                }
+                
+                selectedDueTime = selectedTime
                 binding.btnDueTime.text = selectedDueTime
             },
             calendar.get(Calendar.HOUR_OF_DAY),
@@ -295,13 +409,39 @@ class AddEditTodoActivity : AppCompatActivity() {
     }
 
     private fun saveTodo() {
+        // 检查当前TODO是否已完成，如果已完成则不允许保存
+        val currentTodo = viewModel.todo.value
+        if (currentTodo?.isCompleted == true) {
+            Toast.makeText(this, "已完成的任务无法编辑", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
         val title = binding.etTitle.text.toString().trim()
 
         if (title.isEmpty()) {
             Toast.makeText(this, "请输入标题", Toast.LENGTH_SHORT).show()
             return
         }
-        viewModel.saveTodo(title, "", selectedPriority, selectedDueDate, selectedDueTime, isDaily, selectedDailyTime, selectedDailyEndDate)
+        
+        // 验证截止时间不能早于当前时间
+        if (selectedDueDate != null && selectedDueTime != null) {
+            val selectedDateTime = Calendar.getInstance()
+            selectedDateTime.time = selectedDueDate!!
+            val timeParts = selectedDueTime!!.split(":")
+            selectedDateTime.set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
+            selectedDateTime.set(Calendar.MINUTE, timeParts[1].toInt())
+            selectedDateTime.set(Calendar.SECOND, 0)
+            selectedDateTime.set(Calendar.MILLISECOND, 0)
+            
+            val currentDateTime = Calendar.getInstance()
+            
+            if (selectedDateTime.before(currentDateTime)) {
+                Toast.makeText(this, "截止时间不能早于当前时间", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+        
+        viewModel.saveTodo(title, selectedPriority, selectedDueDate, selectedDueTime, isDaily, selectedDailyTime, selectedDailyEndDate)
         finish()
     }
 

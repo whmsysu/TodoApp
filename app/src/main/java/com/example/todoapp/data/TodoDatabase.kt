@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Todo::class],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -41,6 +41,37 @@ abstract class TodoDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 删除description字段
+                database.execSQL("CREATE TABLE todos_new (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "title TEXT NOT NULL, " +
+                        "priority TEXT NOT NULL, " +
+                        "isCompleted INTEGER NOT NULL DEFAULT 0, " +
+                        "createdAt INTEGER NOT NULL, " +
+                        "dueDate INTEGER, " +
+                        "dueTime TEXT, " +
+                        "isDaily INTEGER NOT NULL DEFAULT 0, " +
+                        "dailyTime TEXT, " +
+                        "dailyEndDate INTEGER, " +
+                        "lastCompletedDate INTEGER)")
+                
+                database.execSQL("INSERT INTO todos_new (id, title, priority, isCompleted, createdAt, dueDate, dueTime, isDaily, dailyTime, dailyEndDate, lastCompletedDate) " +
+                        "SELECT id, title, priority, isCompleted, createdAt, dueDate, dueTime, isDaily, dailyTime, dailyEndDate, lastCompletedDate FROM todos")
+                
+                database.execSQL("DROP TABLE todos")
+                database.execSQL("ALTER TABLE todos_new RENAME TO todos")
+            }
+        }
+
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 添加completedAt字段
+                database.execSQL("ALTER TABLE todos ADD COLUMN completedAt INTEGER")
+            }
+        }
+
         fun getDatabase(context: Context): TodoDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -48,7 +79,7 @@ abstract class TodoDatabase : RoomDatabase() {
                     TodoDatabase::class.java,
                     "todo_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
                 INSTANCE = instance
                 instance

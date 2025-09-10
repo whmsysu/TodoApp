@@ -55,7 +55,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupChips() {
-        binding.chipAll.setOnClickListener { viewModel.setFilter(TodoFilter.ALL) }
         binding.chipPending.setOnClickListener { viewModel.setFilter(TodoFilter.PENDING) }
         binding.chipCompleted.setOnClickListener { viewModel.setFilter(TodoFilter.COMPLETED) }
         binding.chipDaily.setOnClickListener { viewModel.setFilter(TodoFilter.DAILY) }
@@ -82,13 +81,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateChipSelection(filter: TodoFilter) {
         // Update checked state
-        binding.chipAll.isChecked = filter == TodoFilter.ALL
         binding.chipPending.isChecked = filter == TodoFilter.PENDING
         binding.chipCompleted.isChecked = filter == TodoFilter.COMPLETED
         binding.chipDaily.isChecked = filter == TodoFilter.DAILY
         
         // Update chip styles based on selection
-        updateChipStyle(binding.chipAll, filter == TodoFilter.ALL)
         updateChipStyle(binding.chipPending, filter == TodoFilter.PENDING)
         updateChipStyle(binding.chipCompleted, filter == TodoFilter.COMPLETED)
         updateChipStyle(binding.chipDaily, filter == TodoFilter.DAILY)

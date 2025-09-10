@@ -76,6 +76,17 @@
 
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/tv_completed_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="12sp"
+                android:textColor="@color/green_500"
+                android:visibility="gone"
+                tools:text="完成于: 2024-01-01 14:30"
+                tools:visibility="visible" />
+
         </LinearLayout>
 
     </LinearLayout>

@@ -36,6 +36,7 @@ class TodoAdapter(
         private val priorityTextView: TextView = itemView.findViewById(R.id.tv_priority)
         private val dueDateTextView: TextView = itemView.findViewById(R.id.tv_due_date)
         private val dailyTimeTextView: TextView = itemView.findViewById(R.id.tv_daily_time)
+        private val completedTimeTextView: TextView = itemView.findViewById(R.id.tv_completed_time)
         private val completedCheckBox: CheckBox = itemView.findViewById(R.id.cb_completed)
 
         @SuppressLint("SetTextI18n")
@@ -76,6 +77,15 @@ class TodoAdapter(
 
             completedCheckBox.isChecked = todo.isCompleted
             titleTextView.paint.isStrikeThruText = todo.isCompleted
+
+            // 显示完成时间
+            if (todo.isCompleted && todo.completedAt != null) {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                completedTimeTextView.text = "完成于: ${dateFormat.format(todo.completedAt)}"
+                completedTimeTextView.visibility = View.VISIBLE
+            } else {
+                completedTimeTextView.visibility = View.GONE
+            }
 
             itemView.setOnClickListener { onTodoClick(todo) }
             completedCheckBox.setOnClickListener {

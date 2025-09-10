@@ -19,7 +19,7 @@ class TodoNotificationManager(private val context: Context) {
         val inputData = Data.Builder()
             .putInt(TodoNotificationWorker.NOTIFICATION_ID, todo.id)
             .putString(TodoNotificationWorker.TODO_TITLE, todo.title)
-            .putString(TodoNotificationWorker.TODO_DESCRIPTION, todo.description)
+            .putString(TodoNotificationWorker.TODO_DESCRIPTION, "")
             .build()
 
         val constraints = Constraints.Builder()

@@ -12,6 +12,8 @@ import com.example.todoapp.data.TodoDatabase
 import com.example.todoapp.notification.TodoNotificationManager
 import com.example.todoapp.repository.TodoRepository
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.Date
 
 class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: TodoRepository
@@ -27,7 +29,7 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         val todoDao = TodoDatabase.getDatabase(application).todoDao()
         repository = TodoRepository(todoDao)
         notificationManager = TodoNotificationManager(application)
-        _currentFilter.value = TodoFilter.ALL
+        _currentFilter.value = TodoFilter.PENDING
         
         // Set up filtered todos LiveData
         setupFilteredTodos()
@@ -54,7 +56,10 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             // Get the todo first, then update it using @Update to ensure LiveData updates
             val todo = repository.getTodoById(id)
             todo?.let {
-                val updatedTodo = it.copy(isCompleted = isCompleted)
+                val updatedTodo = it.copy(
+                    isCompleted = isCompleted,
+                    completedAt = if (isCompleted) Date() else null
+                )
                 repository.updateTodoStatus(updatedTodo)
             }
         }
@@ -63,19 +68,28 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     fun setFilter(filter: TodoFilter) {
         _currentFilter.value = filter
     }
+    
+    private fun isCompletedToday(todo: Todo): Boolean {
+        val completedAt = todo.completedAt ?: return false
+        val today = Calendar.getInstance()
+        val completedDate = Calendar.getInstance()
+        completedDate.time = completedAt
+        
+        return today.get(Calendar.YEAR) == completedDate.get(Calendar.YEAR) &&
+               today.get(Calendar.DAY_OF_YEAR) == completedDate.get(Calendar.DAY_OF_YEAR)
+    }
 
     private var currentTodos: List<Todo> = emptyList()
 
     private fun setupFilteredTodos() {
 
         fun updateFilteredTodos() {
-            val currentFilter = _currentFilter.value ?: TodoFilter.ALL
+            val currentFilter = _currentFilter.value ?: TodoFilter.PENDING
             
             val filteredList = when (currentFilter) {
                 TodoFilter.PENDING -> currentTodos.filter { !it.isCompleted }
-                TodoFilter.COMPLETED -> currentTodos.filter { it.isCompleted }
+                TodoFilter.COMPLETED -> currentTodos.filter { it.isCompleted && isCompletedToday(it) }
                 TodoFilter.DAILY -> currentTodos.filter { it.isDaily }
-                else -> currentTodos
             }
             _filteredTodos.value = filteredList.sortedWith(compareBy<Todo> { todo ->
                 // 1. 首先按日期排序 (null日期排在最后)
@@ -116,5 +130,5 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
 }
 
 enum class TodoFilter {
-    ALL, PENDING, COMPLETED, DAILY
+    PENDING, COMPLETED, DAILY
 }
