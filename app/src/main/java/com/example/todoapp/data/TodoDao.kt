@@ -6,14 +6,8 @@ import java.util.Date
 
 @Dao
 interface TodoDao {
-    @Query("SELECT * FROM todos ORDER BY priority DESC, createdAt DESC")
-    fun getAllTodos(): LiveData<List<Todo>>
-
-    @Query("SELECT * FROM todos WHERE isCompleted = 0 ORDER BY priority DESC, createdAt DESC")
-    fun getPendingTodos(): LiveData<List<Todo>>
-
-    @Query("SELECT * FROM todos WHERE isCompleted = 1 ORDER BY createdAt DESC")
-    fun getCompletedTodos(): LiveData<List<Todo>>
+    // 注意：这些查询已被移除，因为我们现在使用动态的完成状态判断
+    // 所有过滤逻辑都在ViewModel中通过isTodoCompleted()函数处理
 
     // Sorted by due date/time and priority
     // Items without dueTime (NULL or empty string) are sorted after items with dueTime
@@ -37,9 +31,6 @@ interface TodoDao {
     @Delete
     suspend fun deleteTodo(todo: Todo)
 
-    @Query("UPDATE todos SET lastCompletedDate = :date WHERE id = :id")
-    suspend fun updateLastCompletedDate(id: Int, date: Date)
-    
     @Update
     suspend fun updateTodoStatus(todo: Todo)
 }

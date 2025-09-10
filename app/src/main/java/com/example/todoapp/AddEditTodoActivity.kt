@@ -59,6 +59,46 @@ class AddEditTodoActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowHomeEnabled(true)
     }
 
+    private fun isTodoCompleted(todo: Todo): Boolean {
+        // 如果completedAt为空，说明未完成
+        val completedAt = todo.completedAt ?: return false
+        
+        // 如果是每日TODO，需要检查是否是今天完成的
+        if (todo.isDaily) {
+            val today = Calendar.getInstance()
+            val completedDate = Calendar.getInstance()
+            completedDate.time = completedAt
+            
+            return today.get(Calendar.YEAR) == completedDate.get(Calendar.YEAR) &&
+                   today.get(Calendar.DAY_OF_YEAR) == completedDate.get(Calendar.DAY_OF_YEAR)
+        }
+        
+        // 普通TODO，只要有completedAt就算完成
+        return true
+    }
+    
+    private fun isDailyTodoExpired(todo: Todo): Boolean {
+        if (!todo.isDaily) return false
+        
+        val dailyEndDate = todo.dailyEndDate ?: return false // 没有结束日期，不过期
+        val today = Calendar.getInstance()
+        val endDate = Calendar.getInstance()
+        endDate.time = dailyEndDate
+        
+        // 设置时间为00:00:00进行比较
+        today.set(Calendar.HOUR_OF_DAY, 0)
+        today.set(Calendar.MINUTE, 0)
+        today.set(Calendar.SECOND, 0)
+        today.set(Calendar.MILLISECOND, 0)
+        
+        endDate.set(Calendar.HOUR_OF_DAY, 0)
+        endDate.set(Calendar.MINUTE, 0)
+        endDate.set(Calendar.SECOND, 0)
+        endDate.set(Calendar.MILLISECOND, 0)
+        
+        return today.after(endDate)
+    }
+
     private fun disableAllFields() {
         // 禁用标题输入
         binding.etTitle.isEnabled = false
@@ -197,8 +237,8 @@ class AddEditTodoActivity : AppCompatActivity() {
     private fun populateFields(todo: Todo) {
         binding.etTitle.setText(todo.title)
         
-        // 如果TODO已完成，禁用所有编辑功能
-        if (todo.isCompleted) {
+        // 如果TODO已完成或每日TODO已过期，禁用所有编辑功能
+        if (isTodoCompleted(todo) || isDailyTodoExpired(todo)) {
             disableAllFields()
             return
         }
@@ -377,6 +417,31 @@ class AddEditTodoActivity : AppCompatActivity() {
         val timePickerDialog = TimePickerDialog(
             this,
             { _, hourOfDay, minute ->
+                // 如果截止日期是今天，验证提醒时间不能早于当前时间
+                if (selectedDailyEndDate != null) {
+                    val today = Calendar.getInstance()
+                    val endDate = Calendar.getInstance()
+                    endDate.time = selectedDailyEndDate!!
+                    
+                    // 检查是否是今天
+                    val isToday = today.get(Calendar.YEAR) == endDate.get(Calendar.YEAR) &&
+                                  today.get(Calendar.DAY_OF_YEAR) == endDate.get(Calendar.DAY_OF_YEAR)
+                    
+                    if (isToday) {
+                        val currentTime = Calendar.getInstance()
+                        val selectedTime = Calendar.getInstance()
+                        selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                        selectedTime.set(Calendar.MINUTE, minute)
+                        selectedTime.set(Calendar.SECOND, 0)
+                        selectedTime.set(Calendar.MILLISECOND, 0)
+                        
+                        if (selectedTime.before(currentTime)) {
+                            Toast.makeText(this, "如果截止日期是今天，提醒时间不能早于当前时间", Toast.LENGTH_SHORT).show()
+                            return@TimePickerDialog
+                        }
+                    }
+                }
+                
                 selectedDailyTime = String.format("%02d:%02d", hourOfDay, minute)
                 binding.btnDailyTime.text = selectedDailyTime
             },
@@ -395,7 +460,21 @@ class AddEditTodoActivity : AppCompatActivity() {
             this,
             { _, year, month, dayOfMonth ->
                 val selectedCalendar = Calendar.getInstance()
-                selectedCalendar.set(year, month, dayOfMonth)
+                selectedCalendar.set(year, month, dayOfMonth, 0, 0, 0)
+                selectedCalendar.set(Calendar.MILLISECOND, 0)
+                
+                // 验证选择的日期不能早于今天
+                val today = Calendar.getInstance()
+                today.set(Calendar.HOUR_OF_DAY, 0)
+                today.set(Calendar.MINUTE, 0)
+                today.set(Calendar.SECOND, 0)
+                today.set(Calendar.MILLISECOND, 0)
+                
+                if (selectedCalendar.before(today)) {
+                    Toast.makeText(this, "每日重复的截止日期不能早于今天", Toast.LENGTH_SHORT).show()
+                    return@DatePickerDialog
+                }
+                
                 selectedDailyEndDate = selectedCalendar.time
                 
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -405,14 +484,17 @@ class AddEditTodoActivity : AppCompatActivity() {
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
         )
+        
+        // 设置最小日期为今天
+        datePickerDialog.datePicker.minDate = System.currentTimeMillis()
         datePickerDialog.show()
     }
 
     private fun saveTodo() {
-        // 检查当前TODO是否已完成，如果已完成则不允许保存
+        // 检查当前TODO是否已完成或每日TODO已过期，如果满足条件则不允许保存
         val currentTodo = viewModel.todo.value
-        if (currentTodo?.isCompleted == true) {
-            Toast.makeText(this, "已完成的任务无法编辑", Toast.LENGTH_SHORT).show()
+        if (currentTodo != null && (isTodoCompleted(currentTodo) || isDailyTodoExpired(currentTodo))) {
+            Toast.makeText(this, "已完成或已过期的任务无法编辑", Toast.LENGTH_SHORT).show()
             return
         }
         
@@ -438,6 +520,53 @@ class AddEditTodoActivity : AppCompatActivity() {
             if (selectedDateTime.before(currentDateTime)) {
                 Toast.makeText(this, "截止时间不能早于当前时间", Toast.LENGTH_SHORT).show()
                 return
+            }
+        }
+        
+        // 验证每日重复的截止日期不能早于今天
+        if (isDaily && selectedDailyEndDate != null) {
+            val today = Calendar.getInstance()
+            today.set(Calendar.HOUR_OF_DAY, 0)
+            today.set(Calendar.MINUTE, 0)
+            today.set(Calendar.SECOND, 0)
+            today.set(Calendar.MILLISECOND, 0)
+            
+            val endDate = Calendar.getInstance()
+            endDate.time = selectedDailyEndDate!!
+            endDate.set(Calendar.HOUR_OF_DAY, 0)
+            endDate.set(Calendar.MINUTE, 0)
+            endDate.set(Calendar.SECOND, 0)
+            endDate.set(Calendar.MILLISECOND, 0)
+            
+            if (endDate.before(today)) {
+                Toast.makeText(this, "每日重复的截止日期不能早于今天", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+        
+        // 验证每日重复的提醒时间：如果截止日期是今天，提醒时间不能早于当前时间
+        if (isDaily && selectedDailyEndDate != null && selectedDailyTime != null) {
+            val today = Calendar.getInstance()
+            val endDate = Calendar.getInstance()
+            endDate.time = selectedDailyEndDate!!
+            
+            // 检查是否是今天
+            val isToday = today.get(Calendar.YEAR) == endDate.get(Calendar.YEAR) &&
+                          today.get(Calendar.DAY_OF_YEAR) == endDate.get(Calendar.DAY_OF_YEAR)
+            
+            if (isToday) {
+                val currentTime = Calendar.getInstance()
+                val timeParts = selectedDailyTime!!.split(":")
+                val reminderTime = Calendar.getInstance()
+                reminderTime.set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
+                reminderTime.set(Calendar.MINUTE, timeParts[1].toInt())
+                reminderTime.set(Calendar.SECOND, 0)
+                reminderTime.set(Calendar.MILLISECOND, 0)
+                
+                if (reminderTime.before(currentTime)) {
+                    Toast.makeText(this, "如果截止日期是今天，提醒时间不能早于当前时间", Toast.LENGTH_SHORT).show()
+                    return
+                }
             }
         }
         

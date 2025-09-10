@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Todo::class],
-    version = 6,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -72,6 +72,53 @@ abstract class TodoDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 删除isCompleted字段
+                database.execSQL("CREATE TABLE todos_new (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "title TEXT NOT NULL, " +
+                        "priority TEXT NOT NULL, " +
+                        "createdAt INTEGER NOT NULL, " +
+                        "dueDate INTEGER, " +
+                        "dueTime TEXT, " +
+                        "isDaily INTEGER NOT NULL DEFAULT 0, " +
+                        "dailyTime TEXT, " +
+                        "dailyEndDate INTEGER, " +
+                        "lastCompletedDate INTEGER, " +
+                        "completedAt INTEGER)")
+                
+                database.execSQL("INSERT INTO todos_new (id, title, priority, createdAt, dueDate, dueTime, isDaily, dailyTime, dailyEndDate, lastCompletedDate, completedAt) " +
+                        "SELECT id, title, priority, createdAt, dueDate, dueTime, isDaily, dailyTime, dailyEndDate, lastCompletedDate, completedAt FROM todos")
+                
+                database.execSQL("DROP TABLE todos")
+                database.execSQL("ALTER TABLE todos_new RENAME TO todos")
+            }
+        }
+
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 删除lastCompletedDate字段
+                database.execSQL("CREATE TABLE todos_new (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "title TEXT NOT NULL, " +
+                        "priority TEXT NOT NULL, " +
+                        "createdAt INTEGER NOT NULL, " +
+                        "dueDate INTEGER, " +
+                        "dueTime TEXT, " +
+                        "isDaily INTEGER NOT NULL DEFAULT 0, " +
+                        "dailyTime TEXT, " +
+                        "dailyEndDate INTEGER, " +
+                        "completedAt INTEGER)")
+                
+                database.execSQL("INSERT INTO todos_new (id, title, priority, createdAt, dueDate, dueTime, isDaily, dailyTime, dailyEndDate, completedAt) " +
+                        "SELECT id, title, priority, createdAt, dueDate, dueTime, isDaily, dailyTime, dailyEndDate, completedAt FROM todos")
+                
+                database.execSQL("DROP TABLE todos")
+                database.execSQL("ALTER TABLE todos_new RENAME TO todos")
+            }
+        }
+
         fun getDatabase(context: Context): TodoDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -79,7 +126,7 @@ abstract class TodoDatabase : RoomDatabase() {
                     TodoDatabase::class.java,
                     "todo_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                 .build()
                 INSTANCE = instance
                 instance

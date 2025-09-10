@@ -75,11 +75,12 @@ class TodoAdapter(
                 dailyTimeTextView.visibility = View.GONE
             }
 
-            completedCheckBox.isChecked = todo.isCompleted
-            titleTextView.paint.isStrikeThruText = todo.isCompleted
+            val isCompleted = isTodoCompleted(todo)
+            completedCheckBox.isChecked = isCompleted
+            titleTextView.paint.isStrikeThruText = isCompleted
 
             // 显示完成时间
-            if (todo.isCompleted && todo.completedAt != null) {
+            if (isCompleted && todo.completedAt != null) {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
                 completedTimeTextView.text = "完成于: ${dateFormat.format(todo.completedAt)}"
                 completedTimeTextView.visibility = View.VISIBLE
@@ -107,6 +108,46 @@ class TodoAdapter(
                 Priority.MEDIUM -> ContextCompat.getColor(context, R.color.orange)
                 Priority.LOW -> ContextCompat.getColor(context, R.color.green)
             }
+        }
+        
+        private fun isTodoCompleted(todo: Todo): Boolean {
+            // 如果completedAt为空，说明未完成
+            val completedAt = todo.completedAt ?: return false
+            
+            // 如果是每日TODO，需要检查是否是今天完成的
+            if (todo.isDaily) {
+                val today = Calendar.getInstance()
+                val completedDate = Calendar.getInstance()
+                completedDate.time = completedAt
+                
+                return today.get(Calendar.YEAR) == completedDate.get(Calendar.YEAR) &&
+                       today.get(Calendar.DAY_OF_YEAR) == completedDate.get(Calendar.DAY_OF_YEAR)
+            }
+            
+            // 普通TODO，只要有completedAt就算完成
+            return true
+        }
+        
+        private fun isDailyTodoExpired(todo: Todo): Boolean {
+            if (!todo.isDaily) return false
+            
+            val dailyEndDate = todo.dailyEndDate ?: return false // 没有结束日期，不过期
+            val today = Calendar.getInstance()
+            val endDate = Calendar.getInstance()
+            endDate.time = dailyEndDate
+            
+            // 设置时间为00:00:00进行比较
+            today.set(Calendar.HOUR_OF_DAY, 0)
+            today.set(Calendar.MINUTE, 0)
+            today.set(Calendar.SECOND, 0)
+            today.set(Calendar.MILLISECOND, 0)
+            
+            endDate.set(Calendar.HOUR_OF_DAY, 0)
+            endDate.set(Calendar.MINUTE, 0)
+            endDate.set(Calendar.SECOND, 0)
+            endDate.set(Calendar.MILLISECOND, 0)
+            
+            return today.after(endDate)
         }
     }
 
