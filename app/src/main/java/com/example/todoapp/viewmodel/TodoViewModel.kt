@@ -1,7 +1,6 @@
 package com.example.todoapp.viewmodel
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
@@ -67,17 +66,7 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     fun setFilter(filter: TodoFilter) {
         _currentFilter.value = filter
     }
-    
-    private fun isCompletedToday(todo: Todo): Boolean {
-        val completedAt = todo.completedAt ?: return false
-        val today = Calendar.getInstance()
-        val completedDate = Calendar.getInstance()
-        completedDate.time = completedAt
-        
-        return today.get(Calendar.YEAR) == completedDate.get(Calendar.YEAR) &&
-               today.get(Calendar.DAY_OF_YEAR) == completedDate.get(Calendar.DAY_OF_YEAR)
-    }
-    
+
     private fun isTodoCompleted(todo: Todo): Boolean {
         // 如果completedAt为空，说明未完成
         val completedAt = todo.completedAt ?: return false
