@@ -8,12 +8,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.todoapp.data.Priority
 import com.example.todoapp.data.Todo
 import com.example.todoapp.data.TodoDatabase
+import com.example.todoapp.notification.TodoNotificationManager
 import com.example.todoapp.repository.TodoRepository
 import kotlinx.coroutines.launch
 import java.util.Date
 
 class AddEditTodoViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: TodoRepository
+    private val notificationManager: TodoNotificationManager
 
     private val _todo = MutableLiveData<Todo?>()
     val todo: LiveData<Todo?> = _todo
@@ -24,6 +26,7 @@ class AddEditTodoViewModel(application: Application) : AndroidViewModel(applicat
     init {
         val todoDao = TodoDatabase.getDatabase(application).todoDao()
         repository = TodoRepository(todoDao)
+        notificationManager = TodoNotificationManager(application)
         _isEditMode.value = false
     }
 
@@ -35,7 +38,7 @@ class AddEditTodoViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun saveTodo(title: String, description: String, priority: Priority, dueDate: Date?) {
+    fun saveTodo(title: String, description: String, priority: Priority, dueDate: Date?, isDaily: Boolean, dailyTime: String?) {
         val currentTodo = _todo.value
         if (currentTodo != null) {
             // Edit existing todo
@@ -43,7 +46,9 @@ class AddEditTodoViewModel(application: Application) : AndroidViewModel(applicat
                 title = title,
                 description = description,
                 priority = priority,
-                dueDate = dueDate
+                dueDate = dueDate,
+                isDaily = isDaily,
+                dailyTime = dailyTime
             )
             updateTodo(updatedTodo)
         } else {
@@ -52,7 +57,9 @@ class AddEditTodoViewModel(application: Application) : AndroidViewModel(applicat
                 title = title,
                 description = description,
                 priority = priority,
-                dueDate = dueDate
+                dueDate = dueDate,
+                isDaily = isDaily,
+                dailyTime = dailyTime
             )
             insertTodo(newTodo)
         }
@@ -60,13 +67,25 @@ class AddEditTodoViewModel(application: Application) : AndroidViewModel(applicat
 
     private fun insertTodo(todo: Todo) {
         viewModelScope.launch {
-            repository.insertTodo(todo)
+            val todoId = repository.insertTodo(todo)
+            val savedTodo = todo.copy(id = todoId.toInt())
+            
+            // Schedule notification if it's a daily todo
+            if (savedTodo.isDaily) {
+                notificationManager.scheduleDailyNotification(savedTodo)
+            }
         }
     }
 
     private fun updateTodo(todo: Todo) {
         viewModelScope.launch {
             repository.updateTodo(todo)
+            
+            // Cancel existing notification and schedule new one if needed
+            notificationManager.cancelDailyNotification(todo.id)
+            if (todo.isDaily) {
+                notificationManager.scheduleDailyNotification(todo)
+            }
         }
     }
 }

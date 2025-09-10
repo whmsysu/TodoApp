@@ -13,7 +13,10 @@ data class Todo(
     val priority: Priority,
     val isCompleted: Boolean = false,
     val createdAt: Date = Date(),
-    val dueDate: Date? = null
+    val dueDate: Date? = null,
+    val isDaily: Boolean = false,
+    val dailyTime: String? = null, // Format: "HH:mm"
+    val lastCompletedDate: Date? = null
 )
 
 enum class Priority {

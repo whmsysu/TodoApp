@@ -2,6 +2,7 @@ package com.example.todoapp.data
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
+import java.util.Date
 
 @Dao
 interface TodoDao {
@@ -28,4 +29,10 @@ interface TodoDao {
 
     @Query("UPDATE todos SET isCompleted = :isCompleted WHERE id = :id")
     suspend fun updateTodoStatus(id: Int, isCompleted: Boolean)
+
+    @Query("SELECT * FROM todos WHERE isDaily = 1 ORDER BY dailyTime ASC")
+    fun getDailyTodos(): LiveData<List<Todo>>
+
+    @Query("UPDATE todos SET lastCompletedDate = :date WHERE id = :id")
+    suspend fun updateLastCompletedDate(id: Int, date: Date)
 }

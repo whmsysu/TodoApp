@@ -36,6 +36,7 @@ class TodoAdapter(
         private val descriptionTextView: TextView = itemView.findViewById(R.id.tv_description)
         private val priorityTextView: TextView = itemView.findViewById(R.id.tv_priority)
         private val dueDateTextView: TextView = itemView.findViewById(R.id.tv_due_date)
+        private val dailyTimeTextView: TextView = itemView.findViewById(R.id.tv_daily_time)
         private val completedCheckBox: CheckBox = itemView.findViewById(R.id.cb_completed)
 
         fun bind(todo: Todo) {
@@ -50,6 +51,14 @@ class TodoAdapter(
                 dueDateTextView.visibility = View.VISIBLE
             } ?: run {
                 dueDateTextView.visibility = View.GONE
+            }
+
+            // Handle daily todo display
+            if (todo.isDaily && todo.dailyTime != null) {
+                dailyTimeTextView.text = "每日 ${todo.dailyTime}"
+                dailyTimeTextView.visibility = View.VISIBLE
+            } else {
+                dailyTimeTextView.visibility = View.GONE
             }
 
             completedCheckBox.isChecked = todo.isCompleted

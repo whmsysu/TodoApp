@@ -70,6 +70,19 @@
                     android:textColor="@color/gray"
                     tools:text="2024-01-01" />
 
+                <TextView
+                    android:id="@+id/tv_daily_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/purple_500"
+                    android:background="@drawable/daily_background"
+                    android:padding="4dp"
+                    android:visibility="gone"
+                    tools:text="每日 09:00"
+                    tools:visibility="visible" />
+
             </LinearLayout>
 
         </LinearLayout>

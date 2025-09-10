@@ -14,6 +14,8 @@ class TodoRepository(private val todoDao: TodoDao) {
 
     fun getCompletedTodos(): LiveData<List<Todo>> = todoDao.getCompletedTodos()
 
+    fun getDailyTodos(): LiveData<List<Todo>> = todoDao.getDailyTodos()
+
     suspend fun getTodoById(id: Int): Todo? = withContext(Dispatchers.IO) {
         todoDao.getTodoById(id)
     }

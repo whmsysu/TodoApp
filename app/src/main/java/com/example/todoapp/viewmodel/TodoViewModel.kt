@@ -7,14 +7,17 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.todoapp.data.Todo
 import com.example.todoapp.data.TodoDatabase
+import com.example.todoapp.notification.TodoNotificationManager
 import com.example.todoapp.repository.TodoRepository
 import kotlinx.coroutines.launch
 
 class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: TodoRepository
+    private val notificationManager: TodoNotificationManager
     val allTodos: LiveData<List<Todo>>
     val pendingTodos: LiveData<List<Todo>>
     val completedTodos: LiveData<List<Todo>>
+    val dailyTodos: LiveData<List<Todo>>
 
     private val _currentFilter = MutableLiveData<TodoFilter>()
     val currentFilter: LiveData<TodoFilter> = _currentFilter
@@ -22,9 +25,11 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val todoDao = TodoDatabase.getDatabase(application).todoDao()
         repository = TodoRepository(todoDao)
+        notificationManager = TodoNotificationManager(application)
         allTodos = repository.getAllTodos()
         pendingTodos = repository.getPendingTodos()
         completedTodos = repository.getCompletedTodos()
+        dailyTodos = repository.getDailyTodos()
         _currentFilter.value = TodoFilter.ALL
     }
 
@@ -43,6 +48,10 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteTodo(todo: Todo) {
         viewModelScope.launch {
             repository.deleteTodo(todo)
+            // Cancel notification if it's a daily todo
+            if (todo.isDaily) {
+                notificationManager.cancelDailyNotification(todo.id)
+            }
         }
     }
 
@@ -60,11 +69,12 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         return when (_currentFilter.value) {
             TodoFilter.PENDING -> pendingTodos
             TodoFilter.COMPLETED -> completedTodos
+            TodoFilter.DAILY -> dailyTodos
             else -> allTodos
         }
     }
 }
 
 enum class TodoFilter {
-    ALL, PENDING, COMPLETED
+    ALL, PENDING, COMPLETED, DAILY
 }
