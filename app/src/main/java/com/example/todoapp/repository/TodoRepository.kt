@@ -36,7 +36,7 @@ class TodoRepository(private val todoDao: TodoDao) {
         todoDao.deleteTodo(todo)
     }
 
-    suspend fun updateTodoStatus(id: Int, isCompleted: Boolean) = withContext(Dispatchers.IO) {
-        todoDao.updateTodoStatus(id, isCompleted)
+    suspend fun updateTodoStatus(todo: Todo) = withContext(Dispatchers.IO) {
+        todoDao.updateTodoStatus(todo)
     }
 }

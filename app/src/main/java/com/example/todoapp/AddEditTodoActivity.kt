@@ -43,6 +43,9 @@ class AddEditTodoActivity : AppCompatActivity() {
         setupDailyEndDateButton()
         setupSaveButton()
         observeViewModel()
+        
+        // Initialize time button state
+        updateTimeButtonState()
 
         val todoId = intent.getIntExtra(EXTRA_TODO_ID, -1)
         if (todoId != -1) {
@@ -81,11 +84,28 @@ class AddEditTodoActivity : AppCompatActivity() {
         binding.btnDueDate.setOnClickListener {
             showDatePicker()
         }
+        
+        // Long click to clear date
+        binding.btnDueDate.setOnLongClickListener {
+            if (selectedDueDate != null) {
+                selectedDueDate = null
+                selectedDueTime = null
+                binding.btnDueDate.text = "选择日期"
+                binding.btnDueTime.text = "选择时间（可选）"
+                updateTimeButtonState()
+                Toast.makeText(this, "已清除日期和时间", Toast.LENGTH_SHORT).show()
+            }
+            true
+        }
     }
 
     private fun setupDueTimeButton() {
         binding.btnDueTime.setOnClickListener {
-            showDueTimePicker()
+            if (selectedDueDate != null) {
+                showDueTimePicker()
+            } else {
+                Toast.makeText(this, "请先选择截止日期", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -163,6 +183,9 @@ class AddEditTodoActivity : AppCompatActivity() {
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             binding.btnDailyEndDate.text = dateFormat.format(endDate)
         }
+        
+        // Update time button state after populating fields
+        updateTimeButtonState()
     }
 
     private fun showDatePicker() {
@@ -178,12 +201,25 @@ class AddEditTodoActivity : AppCompatActivity() {
                 
                 val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 binding.btnDueDate.text = dateFormat.format(selectedCalendar.time)
+                
+                // Update time button state when date is selected
+                updateTimeButtonState()
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
         )
         datePickerDialog.show()
+    }
+
+    private fun updateTimeButtonState() {
+        if (selectedDueDate != null) {
+            binding.btnDueTime.isEnabled = true
+            binding.btnDueTime.alpha = 1.0f
+        } else {
+            binding.btnDueTime.isEnabled = false
+            binding.btnDueTime.alpha = 0.5f
+        }
     }
 
     private fun showDueTimePicker() {

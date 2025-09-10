@@ -1,6 +1,7 @@
 package com.example.todoapp.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
@@ -57,7 +58,12 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateTodoStatus(id: Int, isCompleted: Boolean) {
         viewModelScope.launch {
-            repository.updateTodoStatus(id, isCompleted)
+            // First get the todo, then update it
+            val todo = repository.getTodoById(id)
+            todo?.let {
+                val updatedTodo = it.copy(isCompleted = isCompleted)
+                repository.updateTodoStatus(updatedTodo)
+            }
         }
     }
 

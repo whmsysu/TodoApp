@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -81,10 +82,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateChipSelection(filter: TodoFilter) {
+        // Update checked state
         binding.chipAll.isChecked = filter == TodoFilter.ALL
         binding.chipPending.isChecked = filter == TodoFilter.PENDING
         binding.chipCompleted.isChecked = filter == TodoFilter.COMPLETED
         binding.chipDaily.isChecked = filter == TodoFilter.DAILY
+        
+        // Update chip styles based on selection
+        updateChipStyle(binding.chipAll, filter == TodoFilter.ALL)
+        updateChipStyle(binding.chipPending, filter == TodoFilter.PENDING)
+        updateChipStyle(binding.chipCompleted, filter == TodoFilter.COMPLETED)
+        updateChipStyle(binding.chipDaily, filter == TodoFilter.DAILY)
+    }
+    
+    private fun updateChipStyle(chip: com.google.android.material.chip.Chip, isSelected: Boolean) {
+        if (isSelected) {
+            chip.setChipBackgroundColorResource(R.color.purple_500)
+            chip.setChipStrokeColorResource(R.color.purple_700)
+            chip.chipStrokeWidth = 2f
+            chip.setTextColor(ContextCompat.getColor(this, R.color.white))
+        } else {
+            chip.setChipBackgroundColorResource(R.color.white)
+            chip.setChipStrokeColorResource(R.color.gray_light)
+            chip.chipStrokeWidth = 1f
+            chip.setTextColor(ContextCompat.getColor(this, R.color.gray))
+        }
     }
 
 

@@ -35,25 +35,45 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:text="全部" />
+            android:text="全部"
+            app:chipBackgroundColor="@color/purple_500"
+            app:chipStrokeColor="@color/purple_700"
+            app:chipStrokeWidth="2dp"
+            app:chipCornerRadius="16dp"
+            app:checkedIconVisible="false" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_pending"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="待办" />
+            android:text="待办"
+            app:chipBackgroundColor="@color/white"
+            app:chipStrokeColor="@color/gray_light"
+            app:chipStrokeWidth="1dp"
+            app:chipCornerRadius="16dp"
+            app:checkedIconVisible="false" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_completed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="已完成" />
+            android:text="已完成"
+            app:chipBackgroundColor="@color/white"
+            app:chipStrokeColor="@color/gray_light"
+            app:chipStrokeWidth="1dp"
+            app:chipCornerRadius="16dp"
+            app:checkedIconVisible="false" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_daily"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="每日" />
+            android:text="每日"
+            app:chipBackgroundColor="@color/white"
+            app:chipStrokeColor="@color/gray_light"
+            app:chipStrokeWidth="1dp"
+            app:chipCornerRadius="16dp"
+            app:checkedIconVisible="false" />
 
     </com.google.android.material.chip.ChipGroup>
 
