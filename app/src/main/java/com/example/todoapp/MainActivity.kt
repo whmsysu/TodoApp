@@ -18,7 +18,9 @@ import com.example.todoapp.viewmodel.TodoFilter
 import com.example.todoapp.viewmodel.TodoViewModel
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: TodoViewModel by viewModels()

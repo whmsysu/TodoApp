@@ -12,9 +12,11 @@ import com.example.todoapp.data.Priority
 import com.example.todoapp.data.Todo
 import com.example.todoapp.databinding.ActivityAddEditTodoBinding
 import com.example.todoapp.viewmodel.AddEditTodoViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import java.text.SimpleDateFormat
 import java.util.*
 
+@AndroidEntryPoint
 class AddEditTodoActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddEditTodoBinding
     private val viewModel: AddEditTodoViewModel by viewModels()

@@ -50,6 +50,8 @@
 - **MVVM (Model-View-ViewModel)**：清晰的架构分离
 - **Repository模式**：数据访问抽象层
 - **LiveData**：响应式数据绑定
+- **依赖注入**：Hilt框架实现松耦合架构
+- **Result模式**：类型安全的错误处理
 
 ### 技术栈
 - **语言**：Kotlin
@@ -57,13 +59,40 @@
 - **数据库**：Room (SQLite) + 数据库迁移
 - **后台任务**：WorkManager (通知调度)
 - **通知系统**：Android Notification API
-- **依赖注入**：手动依赖注入
-- **构建工具**：Gradle + KSP
+- **依赖注入**：Hilt (Dagger Hilt) - 现代化DI框架
+- **构建工具**：Gradle + KSP (Kotlin Symbol Processing)
+- **错误处理**：Result模式 - 类型安全的错误处理
+- **测试框架**：JUnit + Mockito + Robolectric + Coroutines Test
 
 ### 核心组件
 - **数据层**：Room数据库、DAO、Repository
-- **业务层**：ViewModel、Repository
+- **业务层**：ViewModel、Repository、UseCase
 - **表现层**：Activity、Adapter、Layout
+- **依赖注入**：Hilt模块 (DatabaseModule、RepositoryModule、NotificationModule)
+- **错误处理**：Result密封类、ErrorHandler统一错误处理
+- **测试支持**：TestUtils、MockDataFactory、TestCoroutineRule
+
+### 架构特性
+
+#### 🏗️ 依赖注入 (Hilt)
+- **DatabaseModule**：提供Room数据库和DAO实例
+- **RepositoryModule**：提供Repository实例
+- **NotificationModule**：提供通知管理器实例
+- **自动注入**：ViewModel、Activity自动依赖注入
+
+#### 🛡️ 错误处理 (Result模式)
+```kotlin
+sealed class Result<out T> {
+    data class Success<out T>(val data: T) : Result<T>()
+    data class Error(val exception: Throwable) : Result<Nothing>()
+    object Loading : Result<Nothing>()
+}
+```
+
+#### 🧪 测试架构
+- **单元测试**：JUnit + Mockito + Coroutines Test
+- **集成测试**：Robolectric + Hilt Testing
+- **测试工具**：TestUtils、MockDataFactory、TestCoroutineRule
 
 ### 数据模型
 ```kotlin
@@ -102,14 +131,29 @@ app/
 │   │   │   └── TodoAdapter.kt      # RecyclerView适配器
 │   │   ├── notification/            # 通知模块
 │   │   │   └── TodoNotificationManager.kt # 通知管理
+│   │   ├── di/                      # 依赖注入模块
+│   │   │   ├── DatabaseModule.kt   # 数据库依赖模块
+│   │   │   ├── RepositoryModule.kt # 仓库依赖模块
+│   │   │   └── NotificationModule.kt # 通知依赖模块
+│   │   ├── result/                  # 错误处理
+│   │   │   └── Result.kt           # Result密封类
+│   │   ├── error/                   # 错误处理
+│   │   │   └── ErrorHandler.kt     # 统一错误处理
 │   │   ├── MainActivity.kt          # 主界面
-│   │   └── AddEditTodoActivity.kt   # 添加/编辑界面
+│   │   ├── AddEditTodoActivity.kt   # 添加/编辑界面
+│   │   └── TodoApplication.kt       # 应用入口
 │   ├── res/                         # 资源文件
 │   │   ├── layout/                  # 布局文件
 │   │   ├── values/                  # 值资源
 │   │   ├── drawable/                # 图标资源
 │   │   └── mipmap/                  # 应用图标
 │   └── AndroidManifest.xml          # 应用清单
+├── src/test/                        # 单元测试
+│   └── java/com/example/todoapp/
+│       └── utils/                   # 测试工具
+│           ├── TestUtils.kt         # 测试工具类
+│           ├── MockDataFactory.kt   # 模拟数据工厂
+│           └── TestCoroutineRule.kt # 协程测试规则
 ├── build.gradle                     # 模块构建配置
 └── proguard-rules.pro               # 代码混淆规则
 ```
@@ -118,10 +162,12 @@ app/
 
 ### 环境要求
 - **Android Studio**：Arctic Fox 2020.3.1 或更高版本
-- **JDK**：Java 21
+- **JDK**：Java 8 (推荐) 或 Java 11
 - **Android SDK**：API 24+ (Android 7.0)
 - **Gradle**：8.5+
 - **Kotlin**：1.9.20
+- **Hilt**：2.48 (依赖注入)
+- **KSP**：1.9.20-1.0.14 (注解处理)
 
 ### 安装步骤
 
@@ -137,7 +183,11 @@ app/
 
 3. **构建项目**
    ```bash
-   ./gradlew build
+   # 清理并构建（推荐）
+   ./gradlew clean build
+   
+   # 或者使用无缓存构建（如果遇到缓存问题）
+   ./gradlew clean build --no-build-cache --no-daemon
    ```
 
 4. **运行应用**
@@ -155,13 +205,15 @@ app/
 #### 2. 项目配置
 - 确保Gradle版本为8.5+
 - 确保Kotlin版本为1.9.20
-- 使用KSP替代KAPT
+- 使用KSP替代KAPT进行注解处理
+- 配置Hilt依赖注入
+- 使用Result模式进行错误处理
 
 ## 📱 应用截图
 
 ### 主界面
 - 显示所有TODO任务列表
-- 智能过滤：待办、已完成、每日任务
+- 智能过滤：待办、已完成、每日任务                                     
 - 智能排序：按日期、时间、优先级自动排序
 - 滑动删除：左滑删除任务，支持撤销
 - 快速添加新任务
@@ -218,6 +270,12 @@ app/
 
 # 运行UI测试
 ./gradlew connectedAndroidTest
+
+# 运行特定测试
+./gradlew testDebugUnitTest
+
+# 生成测试报告
+./gradlew testDebugUnitTest --continue
 ```
 
 ### 云端测试
@@ -256,6 +314,9 @@ gcloud firebase test android run \
 - **Material Design**：1.11.0
 - **AndroidX Core**：1.12.0
 - **Lifecycle组件**：2.7.0
+- **Hilt依赖注入**：2.48
+- **WorkManager**：2.9.0
+- **测试框架**：JUnit 4.13.2, Mockito 5.5.0, Robolectric 4.10.3
 
 ## 🚀 部署
 
@@ -308,6 +369,13 @@ gcloud firebase test android run \
 
 # 重新构建
 ./gradlew build
+
+# 如果遇到缓存问题，使用无缓存构建
+./gradlew clean build --no-build-cache --no-daemon
+
+# 如果遇到Gradle缓存损坏，删除缓存
+rm -rf ~/.gradle/caches
+./gradlew clean build
 ```
 
 #### 2. 模拟器问题
@@ -319,6 +387,17 @@ gcloud firebase test android run \
 - 检查数据库版本
 - 验证数据迁移
 - 查看Room日志
+
+#### 4. 依赖注入问题
+- 确保Application类添加@HiltAndroidApp注解
+- 检查Activity添加@AndroidEntryPoint注解
+- 验证ViewModel添加@HiltViewModel注解
+- 检查Hilt模块配置
+
+#### 5. 测试问题
+- 确保使用Robolectric进行Android组件测试
+- 检查协程测试配置
+- 验证Mockito配置
 
 ## 🤝 贡献指南
 
@@ -333,6 +412,9 @@ gcloud firebase test android run \
 - 使用有意义的变量名
 - 添加必要的注释
 - 编写单元测试
+- 使用Hilt进行依赖注入
+- 使用Result模式处理错误
+- 遵循MVVM架构模式
 
 ## 📄 许可证
 
@@ -350,6 +432,9 @@ gcloud firebase test android run \
 - Material Design团队
 - Room数据库团队
 - Firebase Test Lab团队
+- Hilt (Dagger) 依赖注入团队
+- KSP (Kotlin Symbol Processing) 团队
+- Robolectric测试框架团队
 
 ## 📞 支持
 
@@ -360,11 +445,20 @@ gcloud firebase test android run \
 
 ---
 
-**版本**：2.1.0  
-**最后更新**：2025-09-10  
+**版本**：2.2.0  
+**最后更新**：2025-09-11  
 **状态**：✅ 生产就绪
 
 ## 🆕 更新日志
+
+### v2.2.0 (2025-09-11) - 架构优化版本
+- 🏗️ **架构升级**：引入Hilt依赖注入框架
+- 🛡️ **错误处理**：实现Result模式进行类型安全的错误处理
+- 🧪 **测试增强**：完善测试基础设施，支持单元测试和集成测试
+- 🔧 **构建优化**：使用KSP替代KAPT，提升构建性能
+- 🐛 **问题修复**：解决JDK兼容性和Gradle缓存问题
+- 📚 **文档完善**：更新架构文档和README说明
+- ✅ **质量提升**：代码质量、可测试性和可维护性显著提升
 
 ### v2.1.0 (2025-09-10)
 - ✨ 新增：完成时间记录功能

@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.devtools.ksp'
+    id 'com.google.dagger.hilt.android'
 }
 
 android {
@@ -33,6 +34,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        dataBinding false
     }
 }
 
@@ -57,7 +59,23 @@ dependencies {
     // WorkManager for notifications
     implementation 'androidx.work:work-runtime-ktx:2.9.0'
     
+    // Hilt dependency injection
+    implementation 'com.google.dagger:hilt-android:2.48'
+    ksp 'com.google.dagger:hilt-compiler:2.48'
+    
+    // Testing dependencies
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
+    testImplementation 'org.mockito.kotlin:mockito-kotlin:5.1.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
+    testImplementation 'app.cash.turbine:turbine:1.0.0'
+    testImplementation 'androidx.arch.core:core-testing:2.2.0'
+    testImplementation 'org.robolectric:robolectric:4.10.3'
+    
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'com.google.dagger:hilt-android-testing:2.48'
+    kspAndroidTest 'com.google.dagger:hilt-compiler:2.48'
 }

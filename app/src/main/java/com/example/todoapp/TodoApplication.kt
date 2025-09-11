@@ -4,11 +4,13 @@ import android.app.Application
 import android.util.Log
 import com.example.todoapp.error.ErrorHandler
 import com.example.todoapp.network.NetworkMonitor
+import dagger.hilt.android.HiltAndroidApp
 
 /**
  * 应用全局Application类
  * 负责全局配置和异常处理
  */
+@HiltAndroidApp
 class TodoApplication : Application() {
     
     companion object {

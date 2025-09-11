@@ -7,15 +7,19 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.todoapp.data.Priority
 import com.example.todoapp.data.Todo
-import com.example.todoapp.data.TodoDatabase
 import com.example.todoapp.notification.TodoNotificationManager
 import com.example.todoapp.repository.TodoRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.util.Date
+import javax.inject.Inject
 
-class AddEditTodoViewModel(application: Application) : AndroidViewModel(application) {
-    private lateinit var repository: TodoRepository
-    private lateinit var notificationManager: TodoNotificationManager
+@HiltViewModel
+class AddEditTodoViewModel @Inject constructor(
+    application: Application,
+    private val repository: TodoRepository,
+    private val notificationManager: TodoNotificationManager
+) : AndroidViewModel(application) {
 
     private val _todo = MutableLiveData<Todo?>()
     val todo: LiveData<Todo?> = _todo
@@ -24,17 +28,25 @@ class AddEditTodoViewModel(application: Application) : AndroidViewModel(applicat
     val isEditMode: LiveData<Boolean> = _isEditMode
 
     init {
-        val todoDao = TodoDatabase.getDatabase(application).todoDao()
-        repository = TodoRepository(todoDao)
-        notificationManager = TodoNotificationManager(application)
         _isEditMode.value = false
     }
 
     fun loadTodo(todoId: Int) {
         viewModelScope.launch {
-            val todo = repository.getTodoById(todoId)
-            _todo.value = todo
-            _isEditMode.value = todo != null
+            when (val result = repository.getTodoById(todoId)) {
+                is com.example.todoapp.result.Result.Success -> {
+                    _todo.value = result.data
+                    _isEditMode.value = result.data != null
+                }
+                is com.example.todoapp.result.Result.Error -> {
+                    // 处理错误，可以显示错误消息
+                    _todo.value = null
+                    _isEditMode.value = false
+                }
+                is com.example.todoapp.result.Result.Loading -> {
+                    // 处理加载状态
+                }
+            }
         }
     }
 
@@ -69,24 +81,41 @@ class AddEditTodoViewModel(application: Application) : AndroidViewModel(applicat
 
     private fun insertTodo(todo: Todo) {
         viewModelScope.launch {
-            val todoId = repository.insertTodo(todo)
-            val savedTodo = todo.copy(id = todoId.toInt())
-            
-            // Schedule notification if it's a daily todo
-            if (savedTodo.isDaily) {
-                notificationManager.scheduleDailyNotification(savedTodo)
+            when (val result = repository.insertTodo(todo)) {
+                is com.example.todoapp.result.Result.Success -> {
+                    val savedTodo = todo.copy(id = result.data.toInt())
+                    
+                    // Schedule notification if it's a daily todo
+                    if (savedTodo.isDaily) {
+                        notificationManager.scheduleDailyNotification(savedTodo)
+                    }
+                }
+                is com.example.todoapp.result.Result.Error -> {
+                    // 处理插入错误
+                }
+                is com.example.todoapp.result.Result.Loading -> {
+                    // 处理加载状态
+                }
             }
         }
     }
 
     private fun updateTodo(todo: Todo) {
         viewModelScope.launch {
-            repository.updateTodo(todo)
-            
-            // Cancel existing notification and schedule new one if needed
-            notificationManager.cancelDailyNotification(todo.id)
-            if (todo.isDaily) {
-                notificationManager.scheduleDailyNotification(todo)
+            when (repository.updateTodo(todo)) {
+                is com.example.todoapp.result.Result.Success -> {
+                    // Cancel existing notification and schedule new one if needed
+                    notificationManager.cancelDailyNotification(todo.id)
+                    if (todo.isDaily) {
+                        notificationManager.scheduleDailyNotification(todo)
+                    }
+                }
+                is com.example.todoapp.result.Result.Error -> {
+                    // 处理更新错误
+                }
+                is com.example.todoapp.result.Result.Loading -> {
+                    // 处理加载状态
+                }
             }
         }
     }
