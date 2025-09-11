@@ -1,15 +1,29 @@
-package com.example.todoapp.repository
+package com.example.todoapp.core.database.repository
 
 import androidx.lifecycle.LiveData
-import com.example.todoapp.data.Todo
-import com.example.todoapp.data.TodoDao
-import com.example.todoapp.result.Result
+import com.example.todoapp.core.database.data.Todo
+import com.example.todoapp.core.database.data.TodoDao
+import com.example.todoapp.core.common.result.Result
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 
 class TodoRepository(private val todoDao: TodoDao) {
 
     fun getAllTodosSortedByDueDate(): LiveData<List<Todo>> = todoDao.getAllTodosSortedByDueDate()
+    
+    fun getAllTodos(): Flow<Result<List<Todo>>> = flow {
+        try {
+            emit(Result.Loading)
+            todoDao.getAllTodosSortedByDueDateFlow().collect { todos ->
+                emit(Result.Success(todos))
+            }
+        } catch (e: Exception) {
+            emit(Result.Error(e))
+        }
+    }.flowOn(Dispatchers.IO)
 
     suspend fun getTodoById(id: Int): Result<Todo?> = withContext(Dispatchers.IO) {
         try {
@@ -55,5 +69,4 @@ class TodoRepository(private val todoDao: TodoDao) {
             Result.Error(e)
         }
     }
-
 }

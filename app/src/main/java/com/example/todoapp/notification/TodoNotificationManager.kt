@@ -2,7 +2,7 @@ package com.example.todoapp.notification
 
 import android.content.Context
 import androidx.work.*
-import com.example.todoapp.data.Todo
+import com.example.todoapp.core.database.data.Todo
 import java.util.concurrent.TimeUnit
 
 class TodoNotificationManager(private val context: Context) {
@@ -12,7 +12,7 @@ class TodoNotificationManager(private val context: Context) {
     fun scheduleDailyNotification(todo: Todo) {
         if (!todo.isDaily || todo.dailyTime == null) return
 
-        val timeParts = todo.dailyTime.split(":")
+        val timeParts = todo.dailyTime!!.split(":")
         val hour = timeParts[0].toInt()
         val minute = timeParts[1].toInt()
 

@@ -2,7 +2,7 @@ package com.example.todoapp
 
 import android.app.Application
 import android.util.Log
-import com.example.todoapp.error.ErrorHandler
+import com.example.todoapp.core.common.error.ErrorHandler
 import com.example.todoapp.network.NetworkMonitor
 import dagger.hilt.android.HiltAndroidApp
 
@@ -38,7 +38,9 @@ class TodoApplication : Application() {
         
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
             // 记录异常信息
-            ErrorHandler.logError(this@TodoApplication, "未捕获的异常", exception)
+            // ErrorHandler.logError(this@TodoApplication, "未捕获的异常", exception)
+            // 使用Android Log直接记录
+            android.util.Log.e("TodoApplication", "未捕获的异常", exception)
             
             // 可以在这里添加崩溃报告逻辑
             // 例如：Firebase Crashlytics

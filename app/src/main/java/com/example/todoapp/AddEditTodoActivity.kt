@@ -8,8 +8,8 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
-import com.example.todoapp.data.Priority
-import com.example.todoapp.data.Todo
+import com.example.todoapp.core.database.data.Priority
+import com.example.todoapp.core.database.data.Todo
 import com.example.todoapp.databinding.ActivityAddEditTodoBinding
 import com.example.todoapp.viewmodel.AddEditTodoViewModel
 import dagger.hilt.android.AndroidEntryPoint

@@ -1,4 +1,4 @@
-package com.example.todoapp.result
+package com.example.todoapp.core.common.result
 
 /**
  * 表示操作结果的密封类

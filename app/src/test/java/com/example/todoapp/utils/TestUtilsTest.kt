@@ -1,6 +1,6 @@
 package com.example.todoapp.utils
 
-import com.example.todoapp.data.Priority
+import com.example.todoapp.core.database.data.Priority
 import org.junit.Test
 import org.junit.Assert.*
 

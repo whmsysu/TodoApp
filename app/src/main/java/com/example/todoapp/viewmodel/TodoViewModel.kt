@@ -7,10 +7,10 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.todoapp.R
-import com.example.todoapp.data.Todo
-import com.example.todoapp.error.ErrorHandler
+import com.example.todoapp.core.database.data.Todo
+import com.example.todoapp.core.common.error.ErrorHandler
 import com.example.todoapp.notification.TodoNotificationManager
-import com.example.todoapp.repository.TodoRepository
+import com.example.todoapp.core.database.repository.TodoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -32,11 +32,11 @@ class TodoViewModel @Inject constructor(
     val filteredTodos: LiveData<List<Todo>> = _filteredTodos
     
     // Error handling
-    private val _errorMessage = MutableLiveData<String>()
-    val errorMessage: LiveData<String> = _errorMessage
+    private val _errorMessage = MutableLiveData<String?>()
+    val errorMessage: LiveData<String?> = _errorMessage
     
-    private val _errorInfo = MutableLiveData<ErrorHandler.ErrorInfo>()
-    val errorInfo: LiveData<ErrorHandler.ErrorInfo> = _errorInfo
+    private val _errorInfo = MutableLiveData<ErrorHandler.ErrorInfo?>()
+    val errorInfo: LiveData<ErrorHandler.ErrorInfo?> = _errorInfo
     
     private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         val errorInfo = ErrorHandler.handleException(exception, getApplication())
@@ -54,15 +54,15 @@ class TodoViewModel @Inject constructor(
     fun insertTodo(todo: Todo) {
         viewModelScope.launch(exceptionHandler) {
             when (val result = repository.insertTodo(todo)) {
-                is com.example.todoapp.result.Result.Success -> {
+                is com.example.todoapp.core.common.result.Result.Success -> {
                     // 成功插入，无需额外处理
                 }
-                is com.example.todoapp.result.Result.Error -> {
-                    val errorInfo = ErrorHandler.handleDatabaseError(result.exception, getApplication())
+                is com.example.todoapp.core.common.result.Result.Error -> {
+                    val errorInfo = ErrorHandler.handleException(result.exception, getApplication())
                     _errorInfo.postValue(errorInfo)
                     _errorMessage.postValue(getApplication<Application>().getString(R.string.error_save_todo))
                 }
-                is com.example.todoapp.result.Result.Loading -> {
+                is com.example.todoapp.core.common.result.Result.Loading -> {
                     // 处理加载状态
                 }
             }
@@ -72,18 +72,18 @@ class TodoViewModel @Inject constructor(
     fun deleteTodo(todo: Todo) {
         viewModelScope.launch(exceptionHandler) {
             when (val result = repository.deleteTodo(todo)) {
-                is com.example.todoapp.result.Result.Success -> {
+                is com.example.todoapp.core.common.result.Result.Success -> {
                     // Cancel notification if it's a daily todo
                     if (todo.isDaily) {
                         notificationManager.cancelDailyNotification(todo.id)
                     }
                 }
-                is com.example.todoapp.result.Result.Error -> {
-                    val errorInfo = ErrorHandler.handleDatabaseError(result.exception, getApplication())
+                is com.example.todoapp.core.common.result.Result.Error -> {
+                    val errorInfo = ErrorHandler.handleException(result.exception, getApplication())
                     _errorInfo.postValue(errorInfo)
                     _errorMessage.postValue(getApplication<Application>().getString(R.string.error_delete_todo))
                 }
-                is com.example.todoapp.result.Result.Loading -> {
+                is com.example.todoapp.core.common.result.Result.Loading -> {
                     // 处理加载状态
                 }
             }
@@ -93,32 +93,32 @@ class TodoViewModel @Inject constructor(
     fun updateTodoStatus(id: Int, isCompleted: Boolean) {
         viewModelScope.launch(exceptionHandler) {
             when (val getResult = repository.getTodoById(id)) {
-                is com.example.todoapp.result.Result.Success -> {
+                is com.example.todoapp.core.common.result.Result.Success -> {
                     getResult.data?.let { todo ->
                         val updatedTodo = todo.copy(
                             completedAt = if (isCompleted) Date() else null
                         )
                         when (val updateResult = repository.updateTodoStatus(updatedTodo)) {
-                            is com.example.todoapp.result.Result.Success -> {
+                            is com.example.todoapp.core.common.result.Result.Success -> {
                                 // 成功更新
                             }
-                            is com.example.todoapp.result.Result.Error -> {
-                                val errorInfo = ErrorHandler.handleDatabaseError(updateResult.exception, getApplication())
+                            is com.example.todoapp.core.common.result.Result.Error -> {
+                                val errorInfo = ErrorHandler.handleException(updateResult.exception, getApplication())
                                 _errorInfo.postValue(errorInfo)
                                 _errorMessage.postValue(getApplication<Application>().getString(R.string.error_update_todo))
                             }
-                            is com.example.todoapp.result.Result.Loading -> {
+                            is com.example.todoapp.core.common.result.Result.Loading -> {
                                 // 处理加载状态
                             }
                         }
                     }
                 }
-                is com.example.todoapp.result.Result.Error -> {
-                    val errorInfo = ErrorHandler.handleDatabaseError(getResult.exception, getApplication())
+                is com.example.todoapp.core.common.result.Result.Error -> {
+                    val errorInfo = ErrorHandler.handleException(getResult.exception, getApplication())
                     _errorInfo.postValue(errorInfo)
                     _errorMessage.postValue(getApplication<Application>().getString(R.string.error_update_todo))
                 }
-                is com.example.todoapp.result.Result.Loading -> {
+                is com.example.todoapp.core.common.result.Result.Loading -> {
                     // 处理加载状态
                 }
             }
@@ -137,7 +137,7 @@ class TodoViewModel @Inject constructor(
     fun retryLastOperation() {
         // 这里可以实现重试逻辑
         // 例如：重新加载数据、重新执行上次失败的操作等
-        ErrorHandler.logInfo("用户请求重试操作")
+        android.util.Log.i("TodoViewModel", "用户请求重试操作")
     }
 
     private fun isTodoCompleted(todo: Todo): Boolean {
@@ -204,9 +204,9 @@ class TodoViewModel @Inject constructor(
             }.thenByDescending { todo ->
                 // 3. 最后按优先级排序 (高优先级在前)
                 when (todo.priority) {
-                    com.example.todoapp.data.Priority.HIGH -> 3
-                    com.example.todoapp.data.Priority.MEDIUM -> 2
-                    com.example.todoapp.data.Priority.LOW -> 1
+                    com.example.todoapp.core.database.data.Priority.HIGH -> 3
+                    com.example.todoapp.core.database.data.Priority.MEDIUM -> 2
+                    com.example.todoapp.core.database.data.Priority.LOW -> 1
                 }
             })
         }

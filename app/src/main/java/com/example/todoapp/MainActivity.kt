@@ -11,9 +11,9 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todoapp.adapter.TodoAdapter
-import com.example.todoapp.data.Todo
+import com.example.todoapp.core.database.data.Todo
 import com.example.todoapp.databinding.ActivityMainBinding
-import com.example.todoapp.error.ErrorHandler
+import com.example.todoapp.core.common.error.ErrorHandler
 import com.example.todoapp.viewmodel.TodoFilter
 import com.example.todoapp.viewmodel.TodoViewModel
 import com.google.android.material.chip.Chip

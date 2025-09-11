@@ -1,7 +1,7 @@
-package com.example.todoapp.di
+package com.example.todoapp.core.database.di
 
-import com.example.todoapp.data.TodoDao
-import com.example.todoapp.repository.TodoRepository
+import com.example.todoapp.core.database.data.TodoDao
+import com.example.todoapp.core.database.repository.TodoRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,7 +1,7 @@
 package com.example.todoapp.utils
 
-import com.example.todoapp.data.Priority
-import com.example.todoapp.data.Todo
+import com.example.todoapp.core.database.data.Priority
+import com.example.todoapp.core.database.data.Todo
 import java.util.Calendar
 import java.util.Date
 

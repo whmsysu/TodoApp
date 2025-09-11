@@ -11,8 +11,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.todoapp.R
-import com.example.todoapp.data.Priority
-import com.example.todoapp.data.Todo
+import com.example.todoapp.core.database.data.Priority
+import com.example.todoapp.core.database.data.Todo
 import java.text.SimpleDateFormat
 import java.util.*
 

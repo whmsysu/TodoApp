@@ -1,9 +1,10 @@
-package com.example.todoapp.di
+package com.example.todoapp.core.database.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.todoapp.data.TodoDao
-import com.example.todoapp.data.TodoDatabase
+import com.example.todoapp.core.database.data.TodoDao
+import com.example.todoapp.core.database.data.TodoDatabase
+import com.example.todoapp.core.database.repository.TodoPagingRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,7 +13,7 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Hilt模块，提供数据库相关的依赖注入
+ * Hilt module for database dependencies
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -22,25 +23,20 @@ object DatabaseModule {
     @Singleton
     fun provideTodoDatabase(@ApplicationContext context: Context): TodoDatabase {
         return Room.databaseBuilder(
-            context.applicationContext,
+            context,
             TodoDatabase::class.java,
             "todo_database"
-        )
-        .addMigrations(
-            TodoDatabase.MIGRATION_1_2,
-            TodoDatabase.MIGRATION_2_3,
-            TodoDatabase.MIGRATION_3_4,
-            TodoDatabase.MIGRATION_4_5,
-            TodoDatabase.MIGRATION_5_6,
-            TodoDatabase.MIGRATION_6_7,
-            TodoDatabase.MIGRATION_7_8,
-            TodoDatabase.MIGRATION_8_9
-        )
-        .build()
+        ).build()
     }
 
     @Provides
     fun provideTodoDao(database: TodoDatabase): TodoDao {
         return database.todoDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTodoPagingRepository(todoDao: TodoDao): TodoPagingRepository {
+        return TodoPagingRepository(todoDao)
     }
 }
