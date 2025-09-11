@@ -17,4 +17,24 @@
     <string name="low_priority">低</string>
     <string name="completed">已完成</string>
     <string name="pending">待办</string>
+    
+    <!-- 错误信息 -->
+    <string name="error_network_connection">网络连接失败，请检查网络设置</string>
+    <string name="error_network_io">网络请求失败，请稍后重试</string>
+    <string name="error_timeout">请求超时，请检查网络连接</string>
+    <string name="error_permission">权限不足，请检查应用权限设置</string>
+    <string name="error_validation">输入信息有误，请检查后重试</string>
+    <string name="error_state">应用状态异常，请重启应用</string>
+    <string name="error_unknown">发生未知错误，请稍后重试</string>
+    <string name="error_database">数据操作失败，请稍后重试</string>
+    <string name="error_save_todo">保存任务失败</string>
+    <string name="error_delete_todo">删除任务失败</string>
+    <string name="error_update_todo">更新任务失败</string>
+    <string name="error_load_todos">加载任务列表失败</string>
+    <string name="error_notification">通知设置失败</string>
+    
+    <!-- 重试按钮 -->
+    <string name="retry">重试</string>
+    <string name="dismiss">忽略</string>
+    <string name="ok">确定</string>
 </resources>

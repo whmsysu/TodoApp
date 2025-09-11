@@ -6,8 +6,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.todoapp.R
 import com.example.todoapp.data.Todo
 import com.example.todoapp.data.TodoDatabase
+import com.example.todoapp.error.ErrorHandler
 import com.example.todoapp.notification.TodoNotificationManager
 import com.example.todoapp.repository.TodoRepository
 import kotlinx.coroutines.launch
@@ -29,8 +31,13 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
     
+    private val _errorInfo = MutableLiveData<ErrorHandler.ErrorInfo>()
+    val errorInfo: LiveData<ErrorHandler.ErrorInfo> = _errorInfo
+    
     private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
-        _errorMessage.postValue("操作失败: ${exception.message}")
+        val errorInfo = ErrorHandler.handleException(exception, getApplication())
+        _errorInfo.postValue(errorInfo)
+        _errorMessage.postValue(errorInfo.userMessage)
     }
 
     init {
@@ -48,7 +55,9 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 repository.insertTodo(todo)
             } catch (e: Exception) {
-                _errorMessage.postValue("添加任务失败: ${e.message}")
+                val errorInfo = ErrorHandler.handleDatabaseError(e, getApplication())
+                _errorInfo.postValue(errorInfo)
+                _errorMessage.postValue(getApplication<Application>().getString(R.string.error_save_todo))
             }
         }
     }
@@ -62,7 +71,9 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
                     notificationManager.cancelDailyNotification(todo.id)
                 }
             } catch (e: Exception) {
-                _errorMessage.postValue("删除任务失败: ${e.message}")
+                val errorInfo = ErrorHandler.handleDatabaseError(e, getApplication())
+                _errorInfo.postValue(errorInfo)
+                _errorMessage.postValue(getApplication<Application>().getString(R.string.error_delete_todo))
             }
         }
     }
@@ -79,7 +90,9 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
                     repository.updateTodoStatus(updatedTodo)
                 }
             } catch (e: Exception) {
-                _errorMessage.postValue("更新任务状态失败: ${e.message}")
+                val errorInfo = ErrorHandler.handleDatabaseError(e, getApplication())
+                _errorInfo.postValue(errorInfo)
+                _errorMessage.postValue(getApplication<Application>().getString(R.string.error_update_todo))
             }
         }
     }
@@ -90,6 +103,13 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     
     fun clearErrorMessage() {
         _errorMessage.value = null
+        _errorInfo.value = null
+    }
+    
+    fun retryLastOperation() {
+        // 这里可以实现重试逻辑
+        // 例如：重新加载数据、重新执行上次失败的操作等
+        ErrorHandler.logInfo("用户请求重试操作")
     }
 
     private fun isTodoCompleted(todo: Todo): Boolean {

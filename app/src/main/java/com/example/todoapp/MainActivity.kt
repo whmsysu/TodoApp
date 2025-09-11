@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.todoapp.adapter.TodoAdapter
 import com.example.todoapp.data.Todo
 import com.example.todoapp.databinding.ActivityMainBinding
+import com.example.todoapp.error.ErrorHandler
 import com.example.todoapp.viewmodel.TodoFilter
 import com.example.todoapp.viewmodel.TodoViewModel
 import com.google.android.material.chip.Chip
@@ -83,7 +84,15 @@ class MainActivity : AppCompatActivity() {
         // Observe error messages
         viewModel.errorMessage.observe(this, Observer { errorMessage ->
             errorMessage?.let {
-                Snackbar.make(binding.root, it, Snackbar.LENGTH_LONG).show()
+                showErrorSnackbar(it)
+                viewModel.clearErrorMessage()
+            }
+        })
+        
+        // Observe detailed error info
+        viewModel.errorInfo.observe(this, Observer { errorInfo ->
+            errorInfo?.let {
+                showDetailedErrorSnackbar(it)
                 viewModel.clearErrorMessage()
             }
         })
@@ -222,5 +231,36 @@ class MainActivity : AppCompatActivity() {
 
         val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
         itemTouchHelper.attachToRecyclerView(binding.recyclerView)
+    }
+    
+    /**
+     * 显示简单错误信息
+     */
+    private fun showErrorSnackbar(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
+            .setAction(getString(R.string.ok)) {
+                // 点击确定按钮的处理
+            }
+            .show()
+    }
+    
+    /**
+     * 显示详细错误信息，包含重试选项
+     */
+    private fun showDetailedErrorSnackbar(errorInfo: ErrorHandler.ErrorInfo) {
+        val snackbar = Snackbar.make(binding.root, errorInfo.userMessage, Snackbar.LENGTH_LONG)
+        
+        // 如果错误支持重试，显示重试按钮
+        if (errorInfo.shouldRetry) {
+            snackbar.setAction(getString(R.string.retry)) {
+                viewModel.retryLastOperation()
+            }
+        } else {
+            snackbar.setAction(getString(R.string.ok)) {
+                // 点击确定按钮的处理
+            }
+        }
+        
+        snackbar.show()
     }
 }
