@@ -89,9 +89,9 @@
 - **自动注入**：ViewModel、Activity自动依赖注入
 
 #### 📄 分页架构 (Paging 3)
-- **TodoPagingSource**：数据分页源
-- **TodoPagingRepository**：分页数据仓库
-- **TodoPagingViewModel**：分页视图模型
+- **Room PagingSource**：Room自动生成的分页数据源
+- **TodoRepository**：统一数据仓库（包含分页功能）
+- **TodoViewModel**：主界面视图模型
 - **高效加载**：按需加载，内存优化
 
 #### 🛡️ 错误处理 (Result模式)
@@ -134,9 +134,9 @@ TodoApp/
 ├── app/                             # 应用模块
 │   ├── src/main/java/com/example/todoapp/
 │   │   ├── viewmodel/               # 视图模型层
-│   │   │   ├── TodoViewModel.kt    # 主界面ViewModel
-│   │   │   ├── TodoStateFlowViewModel.kt # StateFlow ViewModel
-│   │   │   └── AddEditTodoViewModel.kt # 编辑界面ViewModel
+│   │   │   ├── TodoViewModel.kt # 主界面ViewModel
+│   │   │   ├── AddEditTodoViewModel.kt # 编辑界面ViewModel
+│   │   │   └── TodoFilter.kt # 过滤类型枚举
 │   │   ├── adapter/                 # 适配器
 │   │   │   └── TodoAdapter.kt      # RecyclerView适配器
 │   │   ├── notification/            # 通知模块
@@ -164,10 +164,9 @@ TodoApp/
 │   │   │   ├── TodoDatabase.kt     # 数据库配置
 │   │   │   ├── Converters.kt       # 类型转换器
 │   │   │   ├── Priority.kt         # 优先级枚举
-│   │   │   └── TodoPagingSource.kt # 分页数据源
+│   │   │   # Room自动生成PagingSource
 │   │   ├── repository/              # 仓库层
-│   │   │   ├── TodoRepository.kt   # 数据仓库
-│   │   │   └── TodoPagingRepository.kt # 分页仓库
+│   │   │   └── TodoRepository.kt   # 统一数据仓库
 │   │   └── di/                      # 依赖注入模块
 │   │       ├── DatabaseModule.kt   # 数据库依赖模块
 │   │       └── RepositoryModule.kt # 仓库依赖模块
@@ -182,7 +181,7 @@ TodoApp/
 ├── feature:todo/                    # TODO功能模块
 │   ├── src/main/java/com/example/todoapp/feature/todo/
 │   │   └── viewmodel/               # 功能ViewModel
-│   │       └── TodoPagingViewModel.kt # 分页ViewModel
+│   │       └── TodoViewModel.kt # 主界面ViewModel
 │   └── build.gradle                 # 功能模块构建配置
 ├── build.gradle                     # 项目构建配置
 ├── settings.gradle                  # 项目设置

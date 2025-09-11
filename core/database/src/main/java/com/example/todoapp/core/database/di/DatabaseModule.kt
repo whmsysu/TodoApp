@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Room
 import com.example.todoapp.core.database.data.TodoDao
 import com.example.todoapp.core.database.data.TodoDatabase
-import com.example.todoapp.core.database.repository.TodoPagingRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,9 +33,4 @@ object DatabaseModule {
         return database.todoDao()
     }
 
-    @Provides
-    @Singleton
-    fun provideTodoPagingRepository(todoDao: TodoDao): TodoPagingRepository {
-        return TodoPagingRepository(todoDao)
-    }
 }

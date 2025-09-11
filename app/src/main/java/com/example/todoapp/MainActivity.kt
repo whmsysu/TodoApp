@@ -2,11 +2,11 @@ package com.example.todoapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Looper
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +16,9 @@ import com.example.todoapp.databinding.ActivityMainBinding
 import com.example.todoapp.core.common.error.ErrorHandler
 import com.example.todoapp.viewmodel.TodoFilter
 import com.example.todoapp.viewmodel.TodoViewModel
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -74,32 +77,81 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
-        viewModel.filteredTodos.observe(this, Observer { todos ->
-            todoAdapter.submitList(todos)
-            updateEmptyState(todos.isEmpty())
-        })
+        // 观察过滤后的数据
+        lifecycleScope.launch {
+            viewModel.filteredTodos.collectLatest { todos ->
+                updateTodoList(todos)
+            }
+        }
+        
+        // 观察加载状态
+        lifecycleScope.launch {
+            viewModel.isLoading.collectLatest { isLoading ->
+                // 可以在这里处理加载状态，比如显示加载指示器
+                if (isLoading) {
+                    // 显示加载指示器
+                } else {
+                    // 隐藏加载指示器
+                    updateEmptyState() // 更新空状态显示
+                }
+            }
+        }
 
-        viewModel.currentFilter.observe(this, Observer { filter ->
-            updateChipSelection(filter)
-        })
-        
-        // Observe error messages
-        viewModel.errorMessage.observe(this, Observer { errorMessage ->
-            errorMessage?.let {
-                showErrorSnackbar(it)
-                viewModel.clearErrorMessage()
+        // 观察过滤状态
+        lifecycleScope.launch {
+            viewModel.currentFilter.collectLatest { filter ->
+                updateChipSelection(filter)
             }
-        })
+        }
         
-        // Observe detailed error info
-        viewModel.errorInfo.observe(this, Observer { errorInfo ->
-            errorInfo?.let {
-                showDetailedErrorSnackbar(it)
-                viewModel.clearErrorMessage()
+        // 观察错误消息
+        lifecycleScope.launch {
+            viewModel.errorMessage.collectLatest { errorMessage ->
+                errorMessage?.let {
+                    showErrorSnackbar(it)
+                    viewModel.clearErrorMessage()
+                }
             }
-        })
+        }
+        
+        // 观察详细错误信息
+        lifecycleScope.launch {
+            viewModel.errorInfo.collectLatest { errorInfo ->
+                errorInfo?.let {
+                    showDetailedErrorSnackbar(it)
+                    viewModel.clearErrorMessage()
+                }
+            }
+        }
     }
 
+    private fun updateTodoList(todos: List<Todo>) {
+        android.util.Log.d("MainActivity", "updateTodoList called with ${todos.size} todos")
+        android.util.Log.d("MainActivity", "Before submitList: itemCount = ${todoAdapter.itemCount}")
+        
+        // Log first few todos for debugging
+        todos.take(3).forEachIndexed { index, todo ->
+            android.util.Log.d("MainActivity", "Todo $index: id=${todo.id}, title=${todo.title}, completedAt=${todo.completedAt}")
+        }
+        
+        // Ensure we're on the main thread
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            android.util.Log.d("MainActivity", "On main thread, calling submitList")
+            todoAdapter.submitList(todos) {
+                android.util.Log.d("MainActivity", "After submitList: itemCount = ${todoAdapter.itemCount}")
+                updateEmptyState()
+            }
+        } else {
+            android.util.Log.d("MainActivity", "Not on main thread, posting to main thread")
+            runOnUiThread {
+                todoAdapter.submitList(todos) {
+                    android.util.Log.d("MainActivity", "After submitList (UI thread): itemCount = ${todoAdapter.itemCount}")
+                    updateEmptyState()
+                }
+            }
+        }
+    }
+    
     private fun updateChipSelection(filter: TodoFilter) {
         // Update checked state
         binding.chipPending.isChecked = filter == TodoFilter.PENDING
@@ -112,13 +164,16 @@ class MainActivity : AppCompatActivity() {
         updateChipStyle(binding.chipDaily, filter == TodoFilter.DAILY)
     }
     
-    private fun updateEmptyState(isEmpty: Boolean) {
+    private fun updateEmptyState() {
+        // 对于Paging 3，我们需要通过适配器的itemCount来判断是否为空
+        val isEmpty = todoAdapter.itemCount == 0
+        
         if (isEmpty) {
             binding.emptyStateLayout.visibility = View.VISIBLE
             binding.recyclerView.visibility = View.GONE
             
             // Update empty state based on current filter
-            val currentFilter = viewModel.currentFilter.value ?: TodoFilter.PENDING
+            val currentFilter = viewModel.currentFilter.value
             when (currentFilter) {
                 TodoFilter.PENDING -> {
                     binding.tvEmptyTitle.text = "暂无待办任务"
@@ -176,16 +231,18 @@ class MainActivity : AppCompatActivity() {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
-                    val todo = todoAdapter.currentList[position]
-                    deletedTodo = todo
-                    
-                    // Delete the todo
-                    viewModel.deleteTodo(todo)
+                    val todo = todoAdapter.getTodoAt(position)
+                    if (todo != null) {
+                        deletedTodo = todo
+                        
+                        // Delete the todo
+                        viewModel.deleteTodo(todo)
+                    }
                     
                     // Show undo snackbar
                     Snackbar.make(
                         binding.root,
-                        "已删除: ${todo.title}",
+                        "已删除: ${deletedTodo?.title}",
                         Snackbar.LENGTH_LONG
                     ).setAction("撤销") {
                         deletedTodo?.let { todoToRestore ->

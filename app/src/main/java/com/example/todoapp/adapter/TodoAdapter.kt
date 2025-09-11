@@ -28,6 +28,7 @@ class TodoAdapter(
     }
 
     override fun onBindViewHolder(holder: TodoViewHolder, position: Int) {
+        android.util.Log.d("TodoAdapter", "onBindViewHolder called for position $position, itemCount = $itemCount")
         holder.bind(getItem(position))
     }
 
@@ -151,13 +152,28 @@ class TodoAdapter(
         }
     }
 
+    /**
+     * Get todo at specific position
+     */
+    fun getTodoAt(position: Int): Todo? {
+        return if (position >= 0 && position < itemCount) {
+            getItem(position)
+        } else {
+            null
+        }
+    }
+
     class TodoDiffCallback : DiffUtil.ItemCallback<Todo>() {
         override fun areItemsTheSame(oldItem: Todo, newItem: Todo): Boolean {
-            return oldItem.id == newItem.id
+            val result = oldItem.id == newItem.id
+            android.util.Log.d("TodoDiffCallback", "areItemsTheSame: oldId=${oldItem.id}, newId=${newItem.id}, result=$result")
+            return result
         }
 
         override fun areContentsTheSame(oldItem: Todo, newItem: Todo): Boolean {
-            return oldItem == newItem
+            val result = oldItem == newItem
+            android.util.Log.d("TodoDiffCallback", "areContentsTheSame: oldItem=$oldItem, newItem=$newItem, result=$result")
+            return result
         }
     }
 }

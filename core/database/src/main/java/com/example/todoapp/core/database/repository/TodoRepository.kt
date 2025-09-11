@@ -9,11 +9,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class TodoRepository(private val todoDao: TodoDao) {
+@Singleton
+class TodoRepository @Inject constructor(
+    private val todoDao: TodoDao
+) {
 
-    fun getAllTodosSortedByDueDate(): LiveData<List<Todo>> = todoDao.getAllTodosSortedByDueDate()
-    
     fun getAllTodos(): Flow<Result<List<Todo>>> = flow {
         try {
             emit(Result.Loading)
@@ -69,4 +72,5 @@ class TodoRepository(private val todoDao: TodoDao) {
             Result.Error(e)
         }
     }
+    
 }
