@@ -48,6 +48,8 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.apply {
             adapter = todoAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
+            setHasFixedSize(true) // 优化性能，当item大小固定时
+            setItemViewCacheSize(20) // 增加视图缓存
         }
         
         // Setup swipe to delete
@@ -71,11 +73,19 @@ class MainActivity : AppCompatActivity() {
     private fun observeViewModel() {
         viewModel.filteredTodos.observe(this, Observer { todos ->
             todoAdapter.submitList(todos)
-            binding.tvEmpty.visibility = if (todos.isEmpty()) View.VISIBLE else View.GONE
+            updateEmptyState(todos.isEmpty())
         })
 
         viewModel.currentFilter.observe(this, Observer { filter ->
             updateChipSelection(filter)
+        })
+        
+        // Observe error messages
+        viewModel.errorMessage.observe(this, Observer { errorMessage ->
+            errorMessage?.let {
+                Snackbar.make(binding.root, it, Snackbar.LENGTH_LONG).show()
+                viewModel.clearErrorMessage()
+            }
         })
     }
 
@@ -89,6 +99,33 @@ class MainActivity : AppCompatActivity() {
         updateChipStyle(binding.chipPending, filter == TodoFilter.PENDING)
         updateChipStyle(binding.chipCompleted, filter == TodoFilter.COMPLETED)
         updateChipStyle(binding.chipDaily, filter == TodoFilter.DAILY)
+    }
+    
+    private fun updateEmptyState(isEmpty: Boolean) {
+        if (isEmpty) {
+            binding.emptyStateLayout.visibility = View.VISIBLE
+            binding.recyclerView.visibility = View.GONE
+            
+            // Update empty state based on current filter
+            val currentFilter = viewModel.currentFilter.value ?: TodoFilter.PENDING
+            when (currentFilter) {
+                TodoFilter.PENDING -> {
+                    binding.tvEmptyTitle.text = "暂无待办任务"
+                    binding.tvEmptySubtitle.text = "点击右下角的 + 按钮添加新任务"
+                }
+                TodoFilter.COMPLETED -> {
+                    binding.tvEmptyTitle.text = "暂无已完成任务"
+                    binding.tvEmptySubtitle.text = "完成一些任务后，它们会显示在这里"
+                }
+                TodoFilter.DAILY -> {
+                    binding.tvEmptyTitle.text = "暂无每日任务"
+                    binding.tvEmptySubtitle.text = "创建每日重复任务来建立好习惯"
+                }
+            }
+        } else {
+            binding.emptyStateLayout.visibility = View.GONE
+            binding.recyclerView.visibility = View.VISIBLE
+        }
     }
     
     private fun updateChipStyle(chip: Chip, isSelected: Boolean) {

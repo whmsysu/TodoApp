@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 import java.util.Date
 
 class AddEditTodoViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: TodoRepository
-    private val notificationManager: TodoNotificationManager
+    private lateinit var repository: TodoRepository
+    private lateinit var notificationManager: TodoNotificationManager
 
     private val _todo = MutableLiveData<Todo?>()
     val todo: LiveData<Todo?> = _todo

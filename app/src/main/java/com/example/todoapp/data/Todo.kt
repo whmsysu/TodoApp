@@ -1,10 +1,20 @@
 package com.example.todoapp.data
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.Date
 
-@Entity(tableName = "todos")
+@Entity(
+    tableName = "todos",
+    indices = [
+        Index(value = ["dueDate"]),
+        Index(value = ["isDaily"]),
+        Index(value = ["completedAt"]),
+        Index(value = ["priority"]),
+        Index(value = ["dailyEndDate"])
+    ]
+)
 data class Todo(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

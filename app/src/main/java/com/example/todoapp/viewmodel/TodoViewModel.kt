@@ -11,18 +11,27 @@ import com.example.todoapp.data.TodoDatabase
 import com.example.todoapp.notification.TodoNotificationManager
 import com.example.todoapp.repository.TodoRepository
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineExceptionHandler
 import java.util.Calendar
 import java.util.Date
 
 class TodoViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: TodoRepository
-    private val notificationManager: TodoNotificationManager
+    private var repository: TodoRepository
+    private var notificationManager: TodoNotificationManager
     private val _currentFilter = MutableLiveData<TodoFilter>()
     val currentFilter: LiveData<TodoFilter> = _currentFilter
     
     // Single LiveData that combines database data with filter
     private val _filteredTodos = MediatorLiveData<List<Todo>>()
     val filteredTodos: LiveData<List<Todo>> = _filteredTodos
+    
+    // Error handling
+    private val _errorMessage = MutableLiveData<String>()
+    val errorMessage: LiveData<String> = _errorMessage
+    
+    private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+        _errorMessage.postValue("操作失败: ${exception.message}")
+    }
 
     init {
         val todoDao = TodoDatabase.getDatabase(application).todoDao()
@@ -35,36 +44,52 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun insertTodo(todo: Todo) {
-        viewModelScope.launch {
-            repository.insertTodo(todo)
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                repository.insertTodo(todo)
+            } catch (e: Exception) {
+                _errorMessage.postValue("添加任务失败: ${e.message}")
+            }
         }
     }
 
     fun deleteTodo(todo: Todo) {
-        viewModelScope.launch {
-            repository.deleteTodo(todo)
-            // Cancel notification if it's a daily todo
-            if (todo.isDaily) {
-                notificationManager.cancelDailyNotification(todo.id)
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                repository.deleteTodo(todo)
+                // Cancel notification if it's a daily todo
+                if (todo.isDaily) {
+                    notificationManager.cancelDailyNotification(todo.id)
+                }
+            } catch (e: Exception) {
+                _errorMessage.postValue("删除任务失败: ${e.message}")
             }
         }
     }
 
     fun updateTodoStatus(id: Int, isCompleted: Boolean) {
-        viewModelScope.launch {
-            // Get the todo first, then update it using @Update to ensure LiveData updates
-            val todo = repository.getTodoById(id)
-            todo?.let {
-                val updatedTodo = it.copy(
-                    completedAt = if (isCompleted) Date() else null
-                )
-                repository.updateTodoStatus(updatedTodo)
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                // Get the todo first, then update it using @Update to ensure LiveData updates
+                val todo = repository.getTodoById(id)
+                todo?.let {
+                    val updatedTodo = it.copy(
+                        completedAt = if (isCompleted) Date() else null
+                    )
+                    repository.updateTodoStatus(updatedTodo)
+                }
+            } catch (e: Exception) {
+                _errorMessage.postValue("更新任务状态失败: ${e.message}")
             }
         }
     }
 
     fun setFilter(filter: TodoFilter) {
         _currentFilter.value = filter
+    }
+    
+    fun clearErrorMessage() {
+        _errorMessage.value = null
     }
 
     private fun isTodoCompleted(todo: Todo): Boolean {
@@ -121,26 +146,20 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             }
             _filteredTodos.value = filteredList.sortedWith(compareBy<Todo> { todo ->
                 // 1. 首先按日期排序 (null日期排在最后)
-                val dateTime = todo.dueDate?.time ?: Long.MAX_VALUE
-                android.util.Log.d("SortDebug", "Todo: ${todo.title}, Date: ${todo.dueDate}, Time: ${dateTime}")
-                dateTime
+                todo.dueDate?.time ?: Long.MAX_VALUE
             }.thenBy { todo ->
                 // 2. 相同日期内，按时间排序 (没有时间的排在最后)
-                val time = when {
+                when {
                     todo.dueTime.isNullOrBlank() -> "24:00" // 没有时间的排在最后
                     else -> todo.dueTime
                 }
-                android.util.Log.d("SortDebug", "Todo: ${todo.title}, Time: ${time}")
-                time
             }.thenByDescending { todo ->
                 // 3. 最后按优先级排序 (高优先级在前)
-                val priority = when (todo.priority) {
+                when (todo.priority) {
                     com.example.todoapp.data.Priority.HIGH -> 3
                     com.example.todoapp.data.Priority.MEDIUM -> 2
                     com.example.todoapp.data.Priority.LOW -> 1
                 }
-                android.util.Log.d("SortDebug", "Todo: ${todo.title}, Priority: ${priority}")
-                priority
             })
         }
         

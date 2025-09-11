@@ -75,18 +75,47 @@
         app:layout_constraintBottom_toTopOf="@id/fab"
         tools:listitem="@layout/item_todo" />
 
-    <TextView
-        android:id="@+id/tv_empty"
+    <LinearLayout
+        android:id="@+id/empty_state_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/no_todos"
-        android:textSize="16sp"
-        android:textColor="@color/gray"
+        android:orientation="vertical"
+        android:gravity="center"
         android:visibility="gone"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/iv_empty_icon"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginBottom="16dp"
+            android:src="@android:drawable/ic_menu_agenda"
+            android:alpha="0.3"
+            android:contentDescription="空状态图标" />
+
+        <TextView
+            android:id="@+id/tv_empty_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="暂无任务"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/gray"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tv_empty_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="点击右下角的 + 按钮添加新任务"
+            android:textSize="14sp"
+            android:textColor="@color/gray"
+            android:alpha="0.7" />
+
+    </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

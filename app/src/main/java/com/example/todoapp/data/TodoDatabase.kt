@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Todo::class],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -21,7 +21,7 @@ abstract class TodoDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: TodoDatabase? = null
 
-        private val MIGRATION_1_2 = object : Migration(1, 2) {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE todos ADD COLUMN isDaily INTEGER NOT NULL DEFAULT 0")
                 database.execSQL("ALTER TABLE todos ADD COLUMN dailyTime TEXT")
@@ -29,19 +29,19 @@ abstract class TodoDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_2_3 = object : Migration(2, 3) {
+        val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE todos ADD COLUMN dailyEndDate INTEGER")
             }
         }
 
-        private val MIGRATION_3_4 = object : Migration(3, 4) {
+        val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE todos ADD COLUMN dueTime TEXT")
             }
         }
 
-        private val MIGRATION_4_5 = object : Migration(4, 5) {
+        val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // 删除description字段
                 database.execSQL("CREATE TABLE todos_new (" +
@@ -65,14 +65,14 @@ abstract class TodoDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_5_6 = object : Migration(5, 6) {
+        val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // 添加completedAt字段
                 database.execSQL("ALTER TABLE todos ADD COLUMN completedAt INTEGER")
             }
         }
 
-        private val MIGRATION_6_7 = object : Migration(6, 7) {
+        val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // 删除isCompleted字段
                 database.execSQL("CREATE TABLE todos_new (" +
@@ -96,7 +96,7 @@ abstract class TodoDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_7_8 = object : Migration(7, 8) {
+        val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // 删除lastCompletedDate字段
                 database.execSQL("CREATE TABLE todos_new (" +
@@ -118,6 +118,17 @@ abstract class TodoDatabase : RoomDatabase() {
                 database.execSQL("ALTER TABLE todos_new RENAME TO todos")
             }
         }
+        
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // 添加索引以优化查询性能
+                database.execSQL("CREATE INDEX index_todos_dueDate ON todos (dueDate)")
+                database.execSQL("CREATE INDEX index_todos_isDaily ON todos (isDaily)")
+                database.execSQL("CREATE INDEX index_todos_completedAt ON todos (completedAt)")
+                database.execSQL("CREATE INDEX index_todos_priority ON todos (priority)")
+                database.execSQL("CREATE INDEX index_todos_dailyEndDate ON todos (dailyEndDate)")
+            }
+        }
 
         fun getDatabase(context: Context): TodoDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -126,7 +137,7 @@ abstract class TodoDatabase : RoomDatabase() {
                     TodoDatabase::class.java,
                     "todo_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .build()
                 INSTANCE = instance
                 instance
