@@ -4,12 +4,86 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group android:scaleX="2.61"
-           android:scaleY="2.61"
-           android:translateX="22.68"
-           android:translateY="22.68">
+    
+    <!-- iOS风格TODO图标 -->
+    <group android:scaleX="0.6"
+           android:scaleY="0.6"
+           android:translateX="21.6"
+           android:translateY="21.6">
+        
+        <!-- 第一个TODO项 -->
         <path
-            android:fillColor="#FF000000"
-            android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM13,17h-2v-6h2v6zM13,9h-2L11,7h2v2z"/>
+            android:fillColor="#FFFFFF"
+            android:pathData="M12,20 L68,20 L68,32 L12,32 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#FFFFFF"/>
+        
+        <!-- 第一个TODO项的复选框 -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M16,22 L24,22 L24,30 L16,30 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#007AFF"/>
+        
+        <!-- 第一个TODO项的勾选标记 -->
+        <path
+            android:fillColor="#007AFF"
+            android:pathData="M17.5,25.5L19,27L21.5,24.5"
+            android:strokeWidth="2"
+            android:strokeColor="#007AFF"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"/>
+        
+        <!-- 第二个TODO项 -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M12,36 L68,36 L68,48 L12,48 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#FFFFFF"/>
+        
+        <!-- 第二个TODO项的复选框 -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M16,38 L24,38 L24,46 L16,46 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#FFFFFF"/>
+        
+        <!-- 第三个TODO项 -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M12,52 L68,52 L68,64 L12,64 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#FFFFFF"/>
+        
+        <!-- 第三个TODO项的复选框 -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M16,54 L24,54 L24,62 L16,62 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#FFFFFF"/>
+        
+        <!-- 第三个TODO项的勾选标记 -->
+        <path
+            android:fillColor="#007AFF"
+            android:pathData="M17.5,57.5L19,59L21.5,56.5"
+            android:strokeWidth="2"
+            android:strokeColor="#007AFF"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"/>
+        
+        <!-- 添加按钮 -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M52,68 A8,8 0 1,1 52,84 A8,8 0 1,1 52,68 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#007AFF"/>
+        
+        <!-- 加号 -->
+        <path
+            android:fillColor="#007AFF"
+            android:pathData="M48,76L56,76M52,72L52,80"
+            android:strokeWidth="2"
+            android:strokeColor="#007AFF"
+            android:strokeLineCap="round"/>
     </group>
 </vector>
